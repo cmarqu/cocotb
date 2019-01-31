@@ -26,6 +26,8 @@ ifeq ($(SIM),$(filter $(SIM),ius xcelium))
     #SIM_ARGS += -dresolution
     SIM_ARGS += -amsconnrules CR_full_fast
     SIM_ARGS += -ieinfo
+    SIM_ARGS += -ieinfo_log $(SIM_BUILD)/ams_ieinfo.log
+    SIM_ARGS += -spectre_args "+lqtimeout 7200"
     SIM_ARGS += run.scs
     SIM_ARGS += $(EXTRA_SIM_ARGS)
 else

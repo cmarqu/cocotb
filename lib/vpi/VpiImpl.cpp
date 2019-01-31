@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2013, 2018 Potential Ventures Ltd
+* Copyright (c) 2013, 2018, 2019 Potential Ventures Ltd
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -155,6 +155,7 @@ GpiObjHdl* VpiImpl::create_gpi_obj_from_handle(vpiHandle new_hdl,
         case vpiIntegerVar:
         case vpiIntegerNet:
         case vpiRealVar:
+        case vpiStringVar:
         case vpiMemoryWord:
             new_obj = new VpiSignalObjHdl(this, new_hdl, to_gpi_objtype(type), false);
             break;
