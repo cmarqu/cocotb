@@ -16,14 +16,22 @@ import matplotlib.pyplot as plt
 PlotDataset = namedtuple('PlotDataset', 'time, trim, voltage, current')
 
 class MixedSignal_TB(object):
+    """Class for collecting testbench objects.
 
-    def __init__(self, dut):
+    Args:
+        dut: The toplevel of the design-under-test.
+            In this mixed cocotb/HDL testbench environment, it is the HDL testbench.
+        settling_time_ns (int): Time in nanoseconds to wait before sample is taken.
+    """
+
+    def __init__(self, dut, settling_time_ns=1):
         self.dut = dut
-        self.analog_probe = dut.i_analog_probe
-        self.bittogglestream = itertools.cycle(range(2))  # toggle between 0 and 1
+        self.settling_time_ns = settling_time_ns
+        self.analog_probe = dut.i_analog_probe  #: The instance name of the analog probe module.
+        self._bittogglestream = itertools.cycle(range(2))  #: Produce stream that toggles between ``0`` and ``1``.
     
     def probe_values(self):
-        """Collect data from *analog_probe* of class."""
+        """Collect data from instance pointed to by :attr:`analog_probe`."""
         voltage = self.analog_probe.voltage.value
         current = self.analog_probe.current.value
         return PlotDataset(time=get_sim_time(units='ns'),
@@ -31,7 +39,120 @@ class MixedSignal_TB(object):
                            voltage=voltage,
                            current=current)
     
+    @cocotb.coroutine
+    def _get_single_sample(self, node):
+        """Measure a single voltage/current pair on *node*."""
+        toggle = next(self._bittogglestream)
+        self.dut.i_analog_probe.node_to_probe <= node
+        self.analog_probe.probe_voltage_toggle <= toggle
+        self.analog_probe.probe_current_toggle <= toggle
+        yield Timer(5, units='ps')  # NOTE: needs some time for some reason
+        dataset = self.probe_values()
+        self.dut._log.debug(f"trim value={self.dut.trim_val.value.signed_integer}: {self.analog_probe.node_to_probe}={dataset.voltage} V, {dataset.current} A")
+        return dataset
+        
+    @cocotb.coroutine
+    def get_sample_data(self, nodes, num=1, delay_ns=1):
+        """For all *nodes*, get *num* samples, spaced *delay_ns* apart.
 
+        Yields:
+            list: List (*num* samples long) of :any:`PlotDataset` for all *nodes*.
+        """
+        if not isinstance(nodes, list):  # single element? make it a list
+            _nodes = [nodes]
+        else:
+            _nodes = nodes
+        datasets = []
+        for idx in range(num):
+            for node in _nodes:
+                dataset = yield self._get_single_sample(node)
+                datasets.append(dataset)
+                if num > 1 and idx < num:
+                    yield Timer(delay_ns, units='ns')
+        return datasets
+
+    @cocotb.coroutine
+    def find_trim_val(self, probed_node, target_volt, trim_val_node, trim_val_signed=True, trim_val_min=None, trim_val_max=None):
+        """Calculate best trimming value for *target_volt*.
+        Assumes a linear behaviour.
+
+        Args:
+            probed_node: The node to probe for the trimmed voltage.
+            target_volt (float): The target voltage at *probed_node*.
+            trim_val_node: The node to apply the trim value to.
+            trim_val_signed (bool, optional): Flag indication whether the *trim_val_node* has an 
+                unsigned or signed encoding.
+            trim_val_min (int, optional): The minimum value to apply to *trim_val_node*.
+            trim_val_max (int, optional): The maximum value to apply to *trim_val_node*.
+
+        Yields:
+            float: The calculated best value for *trim_val_node*.
+        """
+        # find _trim_val_min/_trim_val_max based on bit length if needed:
+        if trim_val_min is not None:
+            _trim_val_min = trim_val_min
+        else:
+            if trim_val_signed:
+                _trim_val_min = -2**(trim_val_node.value.n_bits-1)
+            else:  # unsigned 
+                _trim_val_min = 0
+        if trim_val_max is not None:
+            _trim_val_max = trim_val_max
+        else:
+            if trim_val_signed:
+                _trim_val_max = 2**(trim_val_node.value.n_bits-1)-1
+            else:  # unsigned
+                _trim_val_max = 2**trim_val_node.value.n_bits-1
+        # the actual trimming procedure:
+        trim_val_node <= _trim_val_min
+        yield Timer(self.settling_time_ns, units='ns')
+        sample = yield self.get_sample_data(probed_node)
+        volt_min = sample[0].voltage
+        trim_val_node <= _trim_val_max
+        yield Timer(self.settling_time_ns, units='ns')
+        sample = yield self.get_sample_data(probed_node)
+        volt_max = sample[0].voltage
+        if target_volt > volt_max:
+            self.dut._log.debug(f"target_volt={target_volt} > volt_max={volt_max}, returning minimum trim value {_trim_val_max}")
+            return _trim_val_max
+        if target_volt < volt_min:
+            self.dut._log.debug(f"target_volt={target_volt} < volt_min={volt_min}, returning maximum trim value {_trim_val_min}")
+            return _trim_val_min
+        trim_diff = _trim_val_max - _trim_val_min
+        volt_diff = volt_max - volt_min
+        ratio = trim_diff/volt_diff
+        target_trim = (target_volt-volt_min)*ratio + _trim_val_min
+        return target_trim
+        
+    def plot_data(self, datasets, graphfile="cocotb_plot.png"):
+        """Plot and save a graph to file *graphfile* with voltage and current over trim value (contained in *datasets*)."""
+        
+        time, trim, voltage, current = zip(*datasets)
+        
+        fig, ax1 = plt.subplots()
+        color = 'tab:red'
+        ax1.set_title(f"Probed node: {self.analog_probe.node_to_probe}")
+        ax1.set_xlabel("trim")
+        ax1.set_ylabel("Voltage (V)", color=color)
+        ax1.plot(trim, voltage, color=color, marker='.', markerfacecolor='black', linewidth=1)
+        ax1.tick_params(axis='y', labelcolor=color)
+        ax1.axhline(linestyle=':', color='tab:gray')  # horizontal line at zero of ax1
+        
+        ax2 = ax1.twinx()  # instantiate a second axis that shares the same x-axis
+        color = 'tab:blue'
+        ax2.set_ylabel("Current (A)", color=color)  # we already handled the x-label with ax1
+        ax2.plot(trim, current, color=color, marker='.', markerfacecolor='black', linewidth=1)
+        ax2.tick_params(axis='y', labelcolor=color)
+        ax2.axhline(linestyle=':', color='tab:gray')  # horizontal line at zero of ax2
+        
+        _mpl_align_yaxis(ax1, 0, ax2, 0)
+        fig.tight_layout()  # otherwise the right y-label is slightly clipped
+        fig.set_size_inches(14, 8)
+        
+        self.dut._log.info(f"Writing file {graphfile}")
+        fig.savefig(graphfile)
+    
+    
 @cocotb.coroutine
 def run_test(dut):
     """Run test for mixed signal simulation."""
@@ -43,149 +164,81 @@ def run_test(dut):
     nodes_to_probe = [
         # "mixed_signal_regulator.node1",  # NOTE: doesn't work in cocotb 1.0.1, because of nettype probably
         "mixed_signal_regulator.i_regulator.vout",
-    ]  #; list of hierarchical nodes to probe
-     
-    @cocotb.coroutine
-    def get_single_sample(node):
-        """Measure a single voltage/current pair on *node*."""
-        toggle = next(tb.bittogglestream)
-        tb.dut.i_analog_probe.node_to_probe <= node
-        tb.analog_probe.probe_voltage_toggle <= toggle
-        tb.analog_probe.probe_current_toggle <= toggle
-        yield Timer(5, units='ps')  # NOTE: needs some time for some reason
-        dataset = tb.probe_values()
-        tb.dut._log.debug(f"trim value={tb.dut.trim_val.value.signed_integer}: {tb.analog_probe.node_to_probe}={dataset.voltage} V, {dataset.current} A")
-        return dataset
-        
-    @cocotb.coroutine
-    def get_sample_data(nodes, num=1, delay_ns=1):
-        """For all *nodes*, get *num* samples, spaced *delay_ns* apart."""
-        if not isinstance(nodes, list):  # single element? make it a list
-            _nodes = [nodes]
-        else:
-            _nodes = nodes
-        datasets = []
-        for idx in range(num):
-            for node in _nodes:
-                dataset = yield get_single_sample(node)
-                datasets.append(dataset)
-                if num > 1:
-                    yield Timer(delay_ns, units='ns')
-        return datasets
+    ]  #: list of hierarchical nodes to probe
 
-    @cocotb.coroutine
-    def do_trimming(node, target_volt, trim_min, trim_max):
-        """Calculate best trimming for *target_volt* within range [*trim_min*..*trim_max*].
-        Assumes a linear behaviour.
-        """
-        tb.dut.trim_val <= trim_min
-        yield Timer(7, units='ns')
-        sample = yield get_single_sample(node)
-        val_min = sample.voltage
-        tb.dut.trim_val <= trim_max
-        yield Timer(7, units='ns')
-        sample = yield get_single_sample(node)
-        val_max = sample.voltage
-        if target_volt > val_max:
-            tb.dut._log.debug(f"target_volt={target_volt} > val_max={val_max}, returning trim_max={trim_max}")
-            return trim_max
-        if target_volt < val_min:
-            tb.dut._log.debug(f"target_volt={target_volt} < val_min={val_min}, returning trim_min={trim_min}")
-            return trim_min
-        trim_diff = trim_max - trim_min
-        val_diff = val_max - val_min
-        ratio = trim_diff/val_diff
-        target_trim = (target_volt-val_min)*ratio + trim_min
-        return target_trim
-        
     probedata = []
 
-    dummy = yield get_single_sample(node)  # FIXME: why is this dummy read needed? Because of $cds_get_analog_value?
+    dummy = yield tb.get_sample_data(node)  # FIXME: why is this dummy read needed? Because of $cds_get_analog_value?
 
     tb.dut._log.setLevel(logging.DEBUG)
 
     # show manual trimming
     tb.dut.vdd_val <= 7.77
     tb.dut.vss_val <= 0.0
+    
     tb.dut.trim_val <= 0
-    yield Timer(7, units='ns')
+    yield Timer(tb.settling_time_ns, units='ns')
     tb.dut._log.info(f"trim_val={tb.dut.trim_val.value.signed_integer}, vdd={tb.dut.vdd_val.value} V")
     
-    datasets = yield get_sample_data(node)
+    datasets = yield tb.get_sample_data(node)
     probedata.extend(datasets)
     
     tb.dut.trim_val <= 3
-    yield Timer(7, units='ns')
+    yield Timer(tb.settling_time_ns, units='ns')
     tb.dut._log.info(f"trim_val={tb.dut.trim_val.value.signed_integer}, vdd={tb.dut.vdd_val.value} V")
-    datasets = yield get_sample_data(node)
+    datasets = yield tb.get_sample_data(node)
     probedata.extend(datasets)
     
     tb.dut.trim_val <= -5
-    yield Timer(7, units='ns')
+    yield Timer(tb.settling_time_ns, units='ns')
     tb.dut._log.info(f"trim_val={tb.dut.trim_val.value.signed_integer}, vdd={tb.dut.vdd_val.value} V")
-    datasets = yield get_sample_data(node)
+    datasets = yield tb.get_sample_data(node)
     probedata.extend(datasets)
+
+    tb.plot_data(datasets=probedata, graphfile="mixed_signal_regulator.png")
 
     # show automatic trimming
     target_volt = 3.013
     print(f"test_mixed_signal_regulator.py ({now_utc()}): Running trimming algorithm for target voltage {target_volt:.3} V")
-    best_trim_float = yield do_trimming(node, target_volt, trim_min=-4, trim_max=4)
+    best_trim_float = yield tb.find_trim_val(probed_node=node, target_volt=target_volt, trim_val_node=tb.dut.trim_val)
     best_trim_rounded = round(best_trim_float)
     tb.dut.trim_val <= best_trim_rounded
-    yield Timer(7, units='ns')    
-    trimmed_data = yield get_single_sample(node)
-    trimmed_volt = trimmed_data.voltage
+    yield Timer(tb.settling_time_ns, units='ns')    
+    datasets = yield tb.get_sample_data(node)
+    trimmed_volt = datasets[0].voltage
     print((f"test_mixed_signal_regulator.py ({now_utc()}): Determined best trimming value to be {best_trim_rounded} "
-           f"which gives a trimmed voltage of {trimmed_volt:.3} V (difference to target={trimmed_volt-target_volt:.3} V)"))
+           f"which gives a trimmed voltage of {trimmed_volt:.3} V (difference to target {trimmed_volt-target_volt:.3} V)"))
     
-    mpl_plot_data(dut=tb.dut, datasets=probedata, analog_probe=tb.analog_probe, graphfile="mixed_signal_regulator.png")
-
+    # show automatic trimming, limited trim range
+    target_volt = 2.39
+    print(f"test_mixed_signal_regulator.py ({now_utc()}): Running trimming algorithm for target voltage {target_volt:.3} V")
+    best_trim_float = yield tb.find_trim_val(probed_node=node, target_volt=target_volt, trim_val_node=tb.dut.trim_val, trim_val_min=-4, trim_val_max=4)
+    best_trim_rounded = round(best_trim_float)
+    tb.dut.trim_val <= best_trim_rounded
+    yield Timer(tb.settling_time_ns, units='ns')    
+    datasets = yield tb.get_sample_data(node)
+    trimmed_volt = datasets[0].voltage
+    print((f"test_mixed_signal_regulator.py ({now_utc()}): Determined best trimming value to be {best_trim_rounded} "
+           f"which gives a trimmed voltage of {trimmed_volt:.3} V (difference to target {trimmed_volt-target_volt:.3} V)"))
+    
     
 # register the test
 factory = TestFactory(run_test)
 factory.generate_tests()
 
-
-def mpl_plot_data(dut, datasets, analog_probe, graphfile="cocotb_plot.png"):
-    """Plot and save a graph with voltage and current over trim value."""
     
-    time, trim, voltage, current = zip(*datasets)
-    
-    fig, ax1 = plt.subplots()
-    color = 'tab:red'
-    ax1.set_title(f"Probed node: {analog_probe.node_to_probe}")
-    ax1.set_xlabel("trim")
-    ax1.set_ylabel("Voltage (V)", color=color)
-    ax1.plot(trim, voltage, color=color, marker='.', markerfacecolor='black', linewidth=1)
-    ax1.tick_params(axis='y', labelcolor=color)
-    ax1.axhline(linestyle=':', color='gray')
-    
-    ax2 = ax1.twinx()  # instantiate a second axis that shares the same x-axis
-    color = 'tab:blue'
-    ax2.set_ylabel("Current (A)", color=color)  # we already handled the x-label with ax1
-    ax2.plot(trim, current, color=color, marker='.', markerfacecolor='black', linewidth=1)
-    ax2.tick_params(axis='y', labelcolor=color)
-    
-    # FIXME mpl_align_yaxis(ax1, 0, ax2, 0)
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    fig.set_size_inches(14, 8)
-    
-    dut._log.info(f"Writing file {graphfile}")
-    fig.savefig(graphfile)
-
-    
-def mpl_align_yaxis(ax1, v1, ax2, v2):
-    """Adjust ax2 ylimit so that v2 in ax2 is aligned to v1 in ax1."""
+def _mpl_align_yaxis(ax1, v1, ax2, v2):
+    """Adjust *ax2* ylimit so that *v2* in *ax2* is aligned to *v1* in *ax1*."""
     _, y1 = ax1.transData.transform((0, v1))
     _, y2 = ax2.transData.transform((0, v2))
-    mpl_adjust_yaxis(ax2,(y1-y2)/2,v2)
-    mpl_adjust_yaxis(ax1,(y2-y1)/2,v1)
+    _mpl_adjust_yaxis(ax2, (y1-y2)/2, v2)
+    _mpl_adjust_yaxis(ax1, (y2-y1)/2, v1)
 
     
-def mpl_adjust_yaxis(ax,ydif,v):
-    """Shift axis ax by ydiff, maintaining point v at the same location."""
+def _mpl_adjust_yaxis(ax, ydiff, v):
+    """Shift axis *ax* by *ydiff*, maintaining point *v* at the same location."""
     inv = ax.transData.inverted()
-    _, dy = inv.transform((0, 0)) - inv.transform((0, ydif))
+    _, dy = inv.transform((0, 0)) - inv.transform((0, ydiff))
     miny, maxy = ax.get_ylim()
     miny, maxy = miny - v, maxy - v
     if -miny>maxy or (-miny==maxy and dy > 0):
@@ -198,5 +251,5 @@ def mpl_adjust_yaxis(ax,ydif,v):
 
 
 def now_utc():
-    """Return ISO8601 date in UTC."""
+    """Return current ISO8601 date and time in the UTC timezone."""
     return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc, microsecond=0).isoformat().replace("+00:00", "Z")

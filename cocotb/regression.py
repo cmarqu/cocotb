@@ -1,4 +1,4 @@
-# Copyright (c) 2013, 2018 Potential Ventures Ltd
+# Copyright (c) 2013, 2018, 2019 Potential Ventures Ltd
 # Copyright (c) 2013 SolarFlare Communications Inc
 # All rights reserved.
 # 
@@ -482,7 +482,7 @@ class TestFactory(object):
             raise TypeError("TestFactory requires a cocotb coroutine")
         self.test_function = test_function
         self.name = self.test_function._func.__name__
-
+        self.log = SimLog("cocotb.regression")
         self.args = args
         self.kwargs_constant = kwargs
         self.kwargs = {}
@@ -541,13 +541,13 @@ class TestFactory(object):
                 else:
                     doc += "\t%s: %s\n" % (optname, repr(optvalue))
 
-            cocotb.log.debug("Adding generated test \"%s\" to module \"%s\"" %
+            self.log.debug("Adding generated test \"%s\" to module \"%s\"" %
                              (name, mod.__name__))
             kwargs = {}
             kwargs.update(self.kwargs_constant)
             kwargs.update(testoptions)
             if hasattr(mod, name):
-                cocotb.log.error("Overwriting %s in module %s. "
+                self.log.error("Overwriting %s in module %s. "
                                  "This causes a previously defined testcase "
                                  "not to be run. Consider setting/changing "
                                  "name_postfix" % (name, mod))

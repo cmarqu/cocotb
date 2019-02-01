@@ -1,12 +1,9 @@
-module analog_probe_cadence;
+module analog_probe;
 
   var string node_to_probe = "";
 
   logic probe_voltage_toggle = 0;
   real voltage;
-
-  logic probe_current_toggle = 0;
-  real current;
 
   always @(probe_voltage_toggle) begin: probe_voltage
     if ($cds_analog_is_valid(node_to_probe, "potential")) begin
@@ -16,6 +13,9 @@ module analog_probe_cadence;
       voltage = 0.0;
     end
   end
+
+  logic probe_current_toggle = 0;
+  real current;
 
   always @(probe_current_toggle) begin: probe_current
     if ($cds_analog_is_valid(node_to_probe, "flow")) begin

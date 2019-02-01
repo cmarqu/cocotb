@@ -30,6 +30,10 @@ ifeq ($(SIM),$(filter $(SIM),ius xcelium))
     SIM_ARGS += -spectre_args "+lqtimeout 7200"
     SIM_ARGS += run.scs
     SIM_ARGS += $(EXTRA_SIM_ARGS)
+else ifeq ($(SIM),vcs)
+    VERILOG_SOURCES += $(WPWD)/../hdl/analog_probe_synopsys.sv
+    VERILOG_SOURCES += $(WPWD)/../hdl/mixed_signal_regulator_synopsys.sv
+    SIM_ARGS += -xlrm coerce_nettype
 else
     $(error "This example does not have support for for SIM=$(SIM)")
 endif
