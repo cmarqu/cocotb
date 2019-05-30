@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-# Copyright (c) 2013, 2018 Potential Ventures Ltd
+# Copyright (c) 2013 Potential Ventures Ltd
 # Copyright (c) 2013 SolarFlare Communications Inc
 # All rights reserved.
 # 
@@ -35,13 +35,12 @@ import os
 import sys
 import weakref
 
-# For autodocumentation don't need the extension modules
-if "SPHINX_BUILD" in os.environ:
-    simulator = None
-    _LOG_SIM_PRECISION = -15
-else:
+if "COCOTB_SIM" in os.environ:
     import simulator
     _LOG_SIM_PRECISION = simulator.get_precision() # request once and cache
+else:
+    simulator = None
+    _LOG_SIM_PRECISION = -15
 
 # python2 to python3 helper functions
 def get_python_integer_types():
@@ -489,6 +488,52 @@ class ParametrizedSingleton(type):
             self = super(ParametrizedSingleton, cls).__call__(*args, **kwargs)
             cls.__instances[key] = self
             return self
+
+
+# backport of Python 3.7's contextlib.nullcontext
+class nullcontext(object):
+    """Context manager that does no additional processing.
+    Used as a stand-in for a normal context manager, when a particular
+    block of code is only sometimes used with a normal context manager:
+
+    >>> cm = optional_cm if condition else nullcontext()
+    >>> with cm:
+    >>>     # Perform operation, using optional_cm if condition is True
+    """
+
+    def __init__(self, enter_result=None):
+        self.enter_result = enter_result
+
+    def __enter__(self):
+        return self.enter_result
+
+    def __exit__(self, *excinfo):
+        pass
+
+
+def reject_remaining_kwargs(name, kwargs):
+    """
+    Helper function to emulate python 3 keyword-only arguments.
+
+    Use as::
+
+        def func(x1, **kwargs):
+            a = kwargs.pop('a', 1)
+            b = kwargs.pop('b', 2)
+            reject_remaining_kwargs('func', kwargs)
+            ...
+
+    To emulate the Python 3 syntax::
+
+        def func(x1, *, a=1, b=2):
+            ...
+    """
+    if kwargs:
+        # match the error message to what python 3 produces
+        bad_arg = next(iter(kwargs))
+        raise TypeError(
+            '{}() got an unexpected keyword argument {!r}'.format(name, bad_arg)
+        )
 
 
 if __name__ == "__main__":

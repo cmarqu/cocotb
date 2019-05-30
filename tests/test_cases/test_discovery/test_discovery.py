@@ -1,40 +1,42 @@
-''' Copyright (c) 2013 Potential Ventures Ltd
-Copyright (c) 2013 SolarFlare Communications Inc
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of Potential Ventures Ltd,
-      SolarFlare Communications Inc nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL POTENTIAL VENTURES LTD BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. '''
+# Copyright (c) 2013 Potential Ventures Ltd
+# Copyright (c) 2013 SolarFlare Communications Inc
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Potential Ventures Ltd,
+#       SolarFlare Communications Inc nor the
+#       names of its contributors may be used to endorse or promote products
+#       derived from this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL POTENTIAL VENTURES LTD BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import cocotb
 import logging
+import os
+import textwrap
 from cocotb.triggers import Timer
 from cocotb.result import TestError, TestFailure
-from cocotb.handle import IntegerObject, ConstantObject, HierarchyObject
+from cocotb.handle import IntegerObject, ConstantObject, HierarchyObject, StringObject
 
 
 @cocotb.test()
 def recursive_discover(dut):
-    """Discover absolutely everything in the dut"""
+    """Discover absolutely everything in the DUT"""
     yield Timer(0)
     def _discover(obj):
         for thing in obj:
@@ -44,7 +46,7 @@ def recursive_discover(dut):
 
 @cocotb.test()
 def discover_module_values(dut):
-    """Discover everything in the dut"""
+    """Discover everything in the DUT"""
     yield Timer(0)
     count = 0
     for thing in dut:
@@ -60,7 +62,25 @@ def ipython_embed(dut):
     IPython.embed()
 
 
+@cocotb.test(skip=True)
+def ipython_embed_kernel(dut):
+    """Start an interactive Python shell."""
+    yield Timer(0)
+    import IPython
+    print(textwrap.dedent("""
+    ###############################################################################
+    Running IPython embed_kernel()
 
+    You can now send this process into the background with "Ctrl-Z bg" and run
+        jupyter console --existing
+    or
+        jupyter qtconsole --existing
+    or
+        jupyter console --existing kernel-{}.json
+    ###############################################################################""".format(os.getpid())))
+    IPython.embed_kernel()
+
+    
 @cocotb.test(expect_error=True)
 def discover_value_not_in_dut(dut):
     """Try and get a value from the DUT that is not there"""
@@ -88,7 +108,7 @@ def access_signal(dut):
              skip=cocotb.LANGUAGE in ["vhdl"])
 def access_single_bit(dut):
     """
-    Access a single bit in a vector of the dut
+    Access a single bit in a vector of the DUT
 
     Icarus v0.96 doesn't support single bit access to vectors
     """
@@ -108,7 +128,7 @@ def access_single_bit(dut):
              skip=cocotb.LANGUAGE in ["vhdl"])
 def access_single_bit_assignment(dut):
     """
-    Access a single bit in a vector of the dut using the assignment mechanism
+    Access a single bit in a vector of the DUT using the assignment mechanism
 
     Icarus v0.96 doesn't support single bit access to vectors
     """
@@ -181,10 +201,8 @@ def access_constant_integer(dut):
         raise TestFailure("EXAMPLE_WIDTH was not 7")
 
 @cocotb.test(skip=cocotb.LANGUAGE in ["verilog"])
-def access_string(dut):
-    """
-    Access to a string, both constant and signal
-    """
+def access_string_vhdl(dut):
+    """Access to a string, both constant and signal."""
     tlog = logging.getLogger("cocotb.test")
     yield Timer(10)
     constant_string = dut.isample_module1.EXAMPLE_STRING;
@@ -199,27 +217,27 @@ def access_string(dut):
     test_string = "cocotb"
     dut.stream_in_string.setimmediatevalue(test_string)
 
-    varible_string = dut.stream_out_string
-    if varible_string != '':
-        raise TestFailure("%r not \'\'" % varible_string)
+    variable_string = dut.stream_out_string
+    if variable_string != '':
+        raise TestFailure("%r not \'\'" % variable_string)
 
     yield Timer(10)
 
-    if varible_string != test_string:
-        raise TestFailure("%r %s != '%s'" % (varible_string, str(varible_string), test_string))
+    if variable_string != test_string:
+        raise TestFailure("%r %s != '%s'" % (variable_string, str(variable_string), test_string))
 
     test_string = "longer_than_the_array"
     tlog.info("Test writing over size with '%s'" % test_string)
 
     dut.stream_in_string.setimmediatevalue(test_string)
-    varible_string = dut.stream_out_string
+    variable_string = dut.stream_out_string
 
     yield Timer(10)
 
-    test_string = test_string[:len(varible_string)]
+    test_string = test_string[:len(variable_string)]
 
-    if varible_string != test_string:
-        raise TestFailure("%r %s != '%s'" % (varible_string, str(varible_string), test_string))
+    if variable_string != test_string:
+        raise TestFailure("%r %s != '%s'" % (variable_string, str(variable_string), test_string))
 
     tlog.info("Test read access to a string character")
 
@@ -227,7 +245,7 @@ def access_string(dut):
 
     idx = 3
 
-    result_slice = varible_string[idx]
+    result_slice = variable_string[idx]
 
     # String is defined as string(1 to 8) so idx=3 will access the 3rd character
     if chr(result_slice) != test_string[idx-1]:
@@ -238,7 +256,7 @@ def access_string(dut):
 
     yield Timer(10)
 
-    for i in varible_string:
+    for i in variable_string:
         lower = chr(i)
         upper = lower.upper()
         i.setimmediatevalue(ord(upper))
@@ -247,10 +265,57 @@ def access_string(dut):
 
     test_string = test_string.upper()
 
-    result = str(varible_string);
+    result = str(variable_string);
     tlog.info("After setting bytes of string value is %s" % result)
-    if varible_string != test_string:
-        raise TestFailure("%r %s != '%s'" % (varible_string, result, test_string))
+    if variable_string != test_string:
+        raise TestFailure("%r %s != '%s'" % (variable_string, result, test_string))
+
+
+# TODO: add tests for Verilog "string_input_port" and "STRING_LOCALPARAM" (see issue #802)
+
+@cocotb.test(skip=cocotb.LANGUAGE in ["vhdl"],
+             expect_error=cocotb.SIM_NAME.lower().startswith("icarus"))
+def access_const_string_verilog(dut):
+    """Access to a const Verilog string."""
+    tlog = logging.getLogger("cocotb.test")
+
+    yield Timer(10)
+    string_const = dut.STRING_CONST;
+    tlog.info("%r is %s" % (string_const, str(string_const)))
+    if not isinstance(string_const, StringObject):
+        raise TestFailure("STRING_CONST was not StringObject")
+    if string_const != "TESTING_CONST":
+        raise TestFailure("STRING_CONST was not == \'TESTING_CONST\'")
+    
+    tlog.info("Modifying const string")
+    string_const <= "MODIFIED"
+    yield Timer(10)
+    string_const = dut.STRING_CONST;
+    if string_const != "TESTING_CONST":
+        raise TestFailure("STRING_CONST was not still \'TESTING_CONST\'")
+
+    
+@cocotb.test(skip=cocotb.LANGUAGE in ["vhdl"],
+             expect_error=cocotb.SIM_NAME.lower().startswith("icarus"))
+def access_var_string_verilog(dut):
+    """Access to a var Verilog string."""
+    tlog = logging.getLogger("cocotb.test")
+
+    yield Timer(10)
+    string_var = dut.STRING_VAR;
+    tlog.info("%r is %s" % (string_var, str(string_var)))
+    if not isinstance(string_var, StringObject):
+        raise TestFailure("STRING_VAR was not StringObject")
+    if string_var != "TESTING_VAR":
+        raise TestFailure("STRING_VAR was not == \'TESTING_VAR\'")
+    
+    tlog.info("Modifying var string")
+    string_var <= "MODIFIED"
+    yield Timer(10)
+    string_var = dut.STRING_VAR;
+    if string_var != "MODIFIED":
+        raise TestFailure("STRING_VAR was not == \'MODIFIED\'")
+
 
 @cocotb.test(skip=cocotb.LANGUAGE in ["verilog"])
 def access_constant_boolean(dut):

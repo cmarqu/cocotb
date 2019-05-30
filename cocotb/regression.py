@@ -1,7 +1,7 @@
 # Copyright (c) 2013, 2018, 2019 Potential Ventures Ltd
 # Copyright (c) 2013 SolarFlare Communications Inc
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #     * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
 #       SolarFlare Communications Inc nor the
 #       names of its contributors may be used to endorse or promote products
 #       derived from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,11 +34,11 @@ from itertools import product
 import sys
 import os
 import traceback
-# For autodocumentation don't need the extension modules
-if "SPHINX_BUILD" in os.environ:
-    simulator = None
-else:
+
+if "COCOTB_SIM" in os.environ:
     import simulator
+else:
+    simulator = None
 
 # Optional support for coverage collection of testbench files
 coverage = None
@@ -105,10 +105,10 @@ class RegressionManager(object):
 
         suite_name = os.getenv('RESULT_TESTSUITE') if os.getenv('RESULT_TESTSUITE') else "all"
         package_name = os.getenv('RESULT_TESTPACKAGE') if os.getenv('RESULT_TESTPACKAGE') else "all"
-                
+
         self.xunit.add_testsuite(name=suite_name, tests=repr(self.ntests),
                                  package=package_name)
-        
+
         if (self._seed is not None):
             self.xunit.add_property(name="random_seed", value=("%d"%self._seed))
 
@@ -232,17 +232,22 @@ class RegressionManager(object):
         self.failures += 1
 
     def handle_result(self, result):
-        """
-        Handle a test result.
+        """Handle a test result.
 
         Dump result to XML and schedule the next test (if any).
 
-        Args: 
-            result: The sub-exception of TestComplete to raise
+        Args:
+            result: The sub-exception of TestComplete to raise.
         """
         real_time   = time.time() - self._running_test.start_time
         sim_time_ns = get_sim_time('ns') - self._running_test.start_sim_time
-        ratio_time  = sim_time_ns / real_time
+        try:
+            ratio_time  = sim_time_ns / real_time
+        except ZeroDivisionError:
+            if round(sim_time_ns, 2) == 0:
+                ratio_time = float('nan')
+            else:
+                ratio_time = float('inf')
         self.xunit.add_testcase(name=self._running_test.funcname,
                                 classname=self._running_test.module,
                                 time=repr(real_time),
@@ -305,7 +310,7 @@ class RegressionManager(object):
         self.execute()
 
     def execute(self):
-        self._running_test = cocotb.regression.next_test()
+        self._running_test = cocotb.regression_manager.next_test()
         if self._running_test:
             start = ''
             end   = ''
@@ -401,19 +406,18 @@ class RegressionManager(object):
 
 
 def _create_test(function, name, documentation, mod, *args, **kwargs):
-    """
-    Factory function to create tests, avoids late binding.
+    """Factory function to create tests, avoids late binding.
 
     Creates a test dynamically.  The test will call the supplied
     function with the supplied arguments.
 
     Args:
-        function (function):  The test function to run
-        name (str):           The name of the test
-        documentation (str):  The docstring for the test
-        mod (module):         The module this function belongs to
-        *args:                Remaining args to pass to test function
-        **kwargs:             Passed to the test function
+        function (function):  The test function to run.
+        name (str):           The name of the test.
+        documentation (str):  The docstring for the test.
+        mod (module):         The module this function belongs to.
+        *args:                Remaining args to pass to test function.
+        **kwargs:             Passed to the test function.
 
     Returns:
         Decorated test function
@@ -428,8 +432,7 @@ def _create_test(function, name, documentation, mod, *args, **kwargs):
 
 
 class TestFactory(object):
-    """
-    Used to automatically generate tests.
+    """Used to automatically generate tests.
 
     Assuming we have a common test function that will run a test. This test
     function will take keyword arguments (for example generators for each of
@@ -486,6 +489,7 @@ class TestFactory(object):
         self.args = args
         self.kwargs_constant = kwargs
         self.kwargs = {}
+        self.log = SimLog("cocotb.regression")
 
     def add_option(self, name, optionlist):
         """Add a named option to the test.

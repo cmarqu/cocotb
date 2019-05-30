@@ -39,6 +39,7 @@ from cocotb.triggers import (Event, RisingEdge, ReadOnly, Timer, NextTimeStep,
 from cocotb.bus import Bus
 from cocotb.log import SimLog
 from cocotb.result import ReturnValue
+from cocotb.utils import reject_remaining_kwargs
 
 
 class BitDriver(object):
@@ -52,9 +53,15 @@ class BitDriver(object):
         self._generator = generator
 
     def start(self, generator=None):
+        """Start generating data.
+
+        Args:
+            generator (optional): Generator yielding data.
+        """
         self._cr = cocotb.fork(self._cr_twiddler(generator=generator))
 
     def stop(self):
+        """Stop generating data."""
         self._cr.kill()
 
     @cocotb.coroutine
@@ -96,6 +103,7 @@ class Driver(object):
         self._thread = cocotb.scheduler.add(self._send_thread())
 
     def kill(self):
+        """Kill the coroutine sending stuff."""
         if self._thread:
             self._thread.kill()
             self._thread = None
@@ -130,7 +138,7 @@ class Driver(object):
 
         Args:
             transaction (any): The transaction to be sent.
-            sync (bool,  optional): Synchronise the transfer by waiting for rising edge.
+            sync (bool, optional): Synchronise the transfer by waiting for a rising edge.
             **kwargs (dict): Additional arguments used in child class'
                 :any:`_driver_send` method.
         """
@@ -144,7 +152,7 @@ class Driver(object):
 
         Args:
             transaction (any): The transaction to be sent.
-            sync (boolean, optional): Synchronise the transfer by waiting for rising edge.
+            sync (boolean, optional): Synchronise the transfer by waiting for a rising edge.
             **kwargs: Additional arguments if required for protocol implemented in subclass.
         """
         raise NotImplementedError("Subclasses of Driver should define a "
@@ -159,7 +167,7 @@ class Driver(object):
             callback (callable, optional): Optional function to be called 
                 when the transaction has been sent.
             event (optional): event to be set when the transaction has been sent.
-            sync (boolean, optional): Synchronise the transfer by waiting for rising edge.
+            sync (boolean, optional): Synchronise the transfer by waiting for a rising edge.
             **kwargs: Any additional arguments used in child class' 
                 :any:`_driver_send` method.
         """
@@ -213,11 +221,14 @@ class BusDriver(Driver):
     _optional_signals = []
 
     def __init__(self, entity, name, clock, **kwargs):
+        # emulate keyword-only arguments in python 2
+        index = kwargs.pop("array_idx", None)
+        reject_remaining_kwargs('__init__', kwargs)
+
         self.log = SimLog("cocotb.%s.%s" % (entity._name, name))
         Driver.__init__(self)
         self.entity = entity
         self.clock = clock
-        index = kwargs.get("array_idx")
         self.bus = Bus(self.entity, name, self._signals,
                        self._optional_signals, array_idx=index)
 
@@ -226,15 +237,22 @@ class BusDriver(Driver):
 
     @coroutine
     def _driver_send(self, transaction, sync=True):
+        """Implementation for BusDriver.
+
+        Args:
+            transaction: The transaction to send.
+            sync (bool, optional): Synchronise the transfer by waiting for a rising edge.
+        """
         if sync:
             yield RisingEdge(self.clock)
         self.bus <= transaction
 
     @coroutine
     def _wait_for_signal(self, signal):
-        """This method will return with the specified signal
-        has hit logic ``1``. The state will be in the :any:`ReadOnly` phase
-        so sim will need to move to :any:`NextTimeStep` before
+        """This method will return when the specified signal
+        has hit logic ``1``. The state will be in the 
+        :class:`~cocotb.triggers.ReadOnly` phase so sim will need
+        to move to :class:`~cocotb.triggers.NextTimeStep` before
         registering more callbacks can occur.
         """
         yield ReadOnly()
@@ -245,9 +263,10 @@ class BusDriver(Driver):
 
     @coroutine
     def _wait_for_nsignal(self, signal):
-        """This method will return with the specified signal
-        has hit logic ``0``. The state will be in the :any:`ReadOnly` phase
-        so sim will need to move to :any:`NextTimeStep` before
+        """This method will return when the specified signal
+        has hit logic ``0``. The state will be in the 
+        :class:`~cocotb.triggers.ReadOnly` phase so sim will need
+        to move to :class:`~cocotb.triggers.NextTimeStep` before
         registering more callbacks can occur.
         """
         yield ReadOnly()

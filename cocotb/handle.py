@@ -38,11 +38,10 @@ from io import StringIO, BytesIO
 
 import os
 
-# For autodocumentation don't need the extension modules
-if "SPHINX_BUILD" in os.environ:
-    simulator = None
-else:
+if "COCOTB_SIM" in os.environ:
     import simulator
+else:
+    simulator = None
 
 import cocotb
 from cocotb.binary import BinaryValue
@@ -216,10 +215,10 @@ class RegionObject(SimHandleBase):
         """Translates the handle name to a key to use in ``_sub_handles`` dictionary."""
         return name.split(".")[-1]
 
-    def _getAttributeNames(self):
+    def __dir__(self):
         """Permits IPython tab completion to work."""
         self._discover_all()
-        return dir(self)
+        return super(RegionObject, self).__dir__() + [str(k) for k in self._sub_handles]
 
 
 class HierarchyObject(RegionObject):
@@ -327,7 +326,7 @@ class HierarchyArrayObject(RegionObject):
         if result:
             return int(result.group("index"))
         else:
-            self._log.error("Unable to match an index pattern: %s", name);
+            self._log.error("Unable to match an index pattern: %s", name)
             return None
 
     def __len__(self):
@@ -358,6 +357,27 @@ class HierarchyArrayObject(RegionObject):
 
     def __setitem__(self, index, value):
         raise TypeError("Not permissible to set %s at index %d" % (self._name, index))
+
+
+class AssignmentResult(object):
+    """
+    Object that exists solely to provide an error message if the caller
+    is not aware of cocotb's meaning of ``<=``.
+    """
+    def __init__(self, signal, value):
+        self._signal = signal
+        self._value = value
+
+    def __bool__(self):
+        raise TypeError(
+            "Attempted to use `{0._signal!r} <= {0._value!r}` (a cocotb "
+            "delayed write) as if it were a numeric comparison. To perform "
+            "comparison, use `{0._signal!r}.value <= {0._value!r}` instead."
+            .format(self)
+        )
+
+    # python 2
+    __nonzero__ = __bool__
 
 
 class NonHierarchyObject(SimHandleBase):
@@ -391,6 +411,7 @@ class NonHierarchyObject(SimHandleBase):
                 module.signal <= 2
         """
         self.value = value
+        return AssignmentResult(self, value)
 
     def __eq__(self, other):
         if isinstance(other, SimHandleBase):
@@ -485,7 +506,7 @@ class NonHierarchyIndexableObject(NonHierarchyObject):
     def __iter__(self):
         try:
             if self._range is None:
-                raise StopIteration
+                return
 
             self._log.debug("Iterating with range [%d:%d]" % (self._range[0], self._range[1]))
             for i in self._range_iter(self._range[0], self._range[1]):
@@ -571,17 +592,17 @@ class ModifiableObject(NonConstantObject):
             value = BinaryValue(value=value, n_bits=len(self), bigEndian=False)
         elif isinstance(value, dict):
             # We're given a dictionary with a list of values and a bit size...
-            num = 0;
+            num = 0
             vallist = list(value["values"])
             vallist.reverse()
             if len(vallist) * value["bits"] != len(self):
                 self._log.critical("Unable to set with array length %d of %d bit entries = %d total, target is only %d bits long" %
-                                   (len(value["values"]), value["bits"], len(value["values"]) * value["bits"], len(self)));
+                                   (len(value["values"]), value["bits"], len(value["values"]) * value["bits"], len(self)))
                 raise TypeError("Unable to set with array length %d of %d bit entries = %d total, target is only %d bits long" %
-                                (len(value["values"]), value["bits"], len(value["values"]) * value["bits"], len(self)));
+                                (len(value["values"]), value["bits"], len(value["values"]) * value["bits"], len(self)))
 
             for val in vallist:
-                num = (num << value["bits"]) + val;
+                num = (num << value["bits"]) + val
             value = BinaryValue(value=num, n_bits=len(self), bigEndian=False)
 
         elif not isinstance(value, BinaryValue):
@@ -754,7 +775,7 @@ def SimHandle(handle, path=None):
         return obj
 
     if t not in _type2cls:
-        raise TestError("Couldn't find a matching object for GPI type %d" % t)
+        raise TestError("Couldn't find a matching object for GPI type %d (path=%s)" % (t, path))
     obj = _type2cls[t](handle, path)
     _handle2obj[handle] = obj
     return obj

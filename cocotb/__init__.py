@@ -52,8 +52,7 @@ from cocotb.decorators import test, coroutine, hook, function, external
 # scheduler package
 
 # GPI logging instance
-# For autodocumentation don't need the extension modules
-if "SPHINX_BUILD" not in os.environ:
+if "COCOTB_SIM" in os.environ:
     import simulator
     logging.basicConfig()
     logging.setLoggerClass(SimBaseLog)
@@ -86,7 +85,7 @@ if "SPHINX_BUILD" not in os.environ:
 
 
 scheduler = Scheduler()
-regression = None
+regression_manager = None
 
 plusargs = {}
 
@@ -120,7 +119,7 @@ def _initialise_testbench(root_name):
     if memcheck_port is not None:
         mem_debug(int(memcheck_port))
 
-    exec_path = os.getenv('SIM_ROOT')
+    exec_path = os.getenv('COCOTB_PY_DIR')
     if exec_path is None:
         exec_path = 'Unknown'
 
@@ -162,11 +161,11 @@ def _initialise_testbench(root_name):
     modules = module_str.split(',')
     hooks = hooks_str.split(',') if hooks_str else []
 
-    global regression
+    global regression_manager
 
-    regression = RegressionManager(root_name, modules, tests=test_str, seed=seed, hooks=hooks)
-    regression.initialise()
-    regression.execute()
+    regression_manager = RegressionManager(root_name, modules, tests=test_str, seed=seed, hooks=hooks)
+    regression_manager.initialise()
+    regression_manager.execute()
 
     _rlock.release()
     return True
