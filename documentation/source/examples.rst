@@ -116,3 +116,11 @@ Example testbench for snippet of code from `comp.lang.verilog <https://github.co
                 raise TestFailure("Output didn't match")
 
         dut._log.info('Sucessfully sent %d cycles of data' % (index + 1))
+
+
+Mixed-signal (analog/digital)
+=============================
+
+.. toctree::
+   rescap
+   regulator

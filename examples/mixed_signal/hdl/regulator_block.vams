@@ -1,7 +1,7 @@
 `include "disciplines.vams" 
 `include "constants.vams" 
 
-module regulator(vdd, trim, vout, vss);
+module regulator_block(vdd, trim, vout, vss);
 
   input signed [3:0] trim; logic trim;
   inout vdd; electrical vdd;

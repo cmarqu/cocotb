@@ -13,18 +13,19 @@ import matplotlib.pyplot as plt
 
 Dataset = namedtuple('Dataset', 'time, voltage, current')
 
-class MixedSignal_TB(object):
+class ResCap_TB(object):
 
-    def __init__(self, dut):
-        self.dut = dut
-        self.analog_probe = dut.i_analog_probe  #: The instance name of the analog probe module.
+    def __init__(self, tb_hdl):
+        self.tb_hdl = tb_hdl
+        self.analog_probe = tb_hdl.i_analog_probe  #: The instance name of the analog probe module.
         self.togglestream = cycle(range(2))  # toggle between 0 and 1
     
     def probe_values(self):
         """Collect data from instance pointed to by :attr:`analog_probe`."""
         voltage = self.analog_probe.voltage.value
         current = self.analog_probe.current.value
-        self.dut._log.info("{}={} V  {} A".format(self.analog_probe, voltage, current))
+        self.tb_hdl._log.info("{}({})={} V  {} A".format(self.analog_probe, self.analog_probe.node_to_probe,
+                                                         voltage, current))
         return Dataset(time=get_sim_time(units='ns'),
                        voltage=voltage,
                        current=current)
@@ -32,12 +33,12 @@ class MixedSignal_TB(object):
     @cocotb.coroutine
     def _get_single_sample(self, node):
         toggle = next(self.togglestream)
-        self.dut.i_analog_probe.node_to_probe <= node
+        self.tb_hdl.i_analog_probe.node_to_probe <= node
         self.analog_probe.probe_voltage_toggle <= toggle
         self.analog_probe.probe_current_toggle <= toggle
         yield Timer(5, units='ps')  # NOTE: needs some time for some reason
         dataset = self.probe_values()
-        self.dut._log.debug(f"{self.analog_probe.node_to_probe}={dataset.voltage} V, {dataset.current} A")
+        self.tb_hdl._log.debug(f"{self.analog_probe.node_to_probe}={dataset.voltage} V, {dataset.current} A")
         return dataset
         
     @cocotb.coroutine
@@ -74,42 +75,42 @@ class MixedSignal_TB(object):
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
         fig.set_size_inches(14, 8)
         
-        self.dut._log.info("Writing file {}".format(graphfile))
+        self.tb_hdl._log.info("Writing file {}".format(graphfile))
         fig.savefig(graphfile)
         
 
 @cocotb.coroutine
-def run_test(dut):
-    """Run test for mixed signal simulation."""
+def run_test(tb_hdl):
+    """Run test for mixed signal resistor/capacitor simulation."""
     
-    tb = MixedSignal_TB(dut)
+    tb_py = ResCap_TB(tb_hdl)
 
     nodes_to_probe = [
-        "mixed_signal.i_resistor.p",
-        "mixed_signal.i_capacitor.p",
+        "tb_rescap.i_rescap.vdd",
+        "tb_rescap.i_rescap.vout",
     ]
      
     probedata = []
 
-    dummy = yield tb.get_sample_data(nodes=nodes_to_probe)  # NOTE: dummy read apparently needed because of $cds_get_analog_value
+    dummy = yield tb_py.get_sample_data(nodes=nodes_to_probe)  # NOTE: dummy read apparently needed because of $cds_get_analog_value
 
     yield Timer(5, units='ns')
     
-    tb.dut.vdd_val <= 5.55
-    tb.dut.gnd_val <= 0.0
-    tb.dut._log.info("Setting vdd={} V".format(tb.dut.vdd_val.value))
+    tb_py.tb_hdl.vdd_val <= 5.55
+    tb_py.tb_hdl.vss_val <= 0.0
+    tb_py.tb_hdl._log.info("Setting vdd={} V".format(tb_py.tb_hdl.vdd_val.value))
 
-    data = yield tb.get_sample_data(steps=80, delay_ns=5, nodes=nodes_to_probe)
+    data = yield tb_py.get_sample_data(steps=80, delay_ns=5, nodes=nodes_to_probe)
     probedata.extend(data)
     
-    tb.dut.vdd_val <= -3.33
-    tb.dut.gnd_val <= 0.0
-    tb.dut._log.info("Setting vdd={} V".format(tb.dut.vdd_val.value))
+    tb_py.tb_hdl.vdd_val <= -3.33
+    tb_py.tb_hdl.vss_val <= 0.0
+    tb_py.tb_hdl._log.info("Setting vdd={} V".format(tb_py.tb_hdl.vdd_val.value))
 
-    data = yield tb.get_sample_data(steps=80, delay_ns=5, nodes=nodes_to_probe)
+    data = yield tb_py.get_sample_data(steps=80, delay_ns=5, nodes=nodes_to_probe)
     probedata.extend(data)
     
-    tb.plot_data(datasets=probedata, nodes=nodes_to_probe, graphfile="mixed_signal.png")
+    tb_py.plot_data(datasets=probedata, nodes=nodes_to_probe, graphfile="rescap.png")
 
 
 

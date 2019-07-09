@@ -1,6 +1,6 @@
 module analog_probe;
 
-  var string node_to_probe = "";
+  var string node_to_probe = "<unassigned>";
 
   logic probe_voltage_toggle = 0;
   real voltage;
@@ -9,8 +9,8 @@ module analog_probe;
     if ($cds_analog_is_valid(node_to_probe, "potential")) begin
       voltage = $cds_get_analog_value(node_to_probe, "potential");
     end else begin
-      $display("%m: node_to_probe=%s is not valid, returning 0.0", node_to_probe);
-      voltage = 0.0;
+      voltage = 0.123456;
+      $display("%m: node_to_probe=%s is not valid, returning %f V", node_to_probe, voltage);
     end
   end
 
@@ -21,8 +21,8 @@ module analog_probe;
     if ($cds_analog_is_valid(node_to_probe, "flow")) begin
       current = $cds_get_analog_value(node_to_probe, "flow");
     end else begin
-      $display("%m: node_to_probe=%s is not valid, returning 0.0", node_to_probe);
-      current = 0.0;
+      current = 0.123456;
+      $display("%m: node_to_probe=%s is not valid, returning %f A", node_to_probe, current);
     end
   end
 

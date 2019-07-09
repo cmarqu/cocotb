@@ -34,6 +34,8 @@ import math
 import os
 import sys
 import weakref
+import functools
+import warnings
 
 if "COCOTB_SIM" in os.environ:
     import simulator
@@ -42,14 +44,19 @@ else:
     simulator = None
     _LOG_SIM_PRECISION = -15
 
-# python2 to python3 helper functions
+# This is six.integer_types
+if sys.version_info.major >= 3:
+    integer_types = (int,)
+else:
+    integer_types = (int, long)
+
+
 def get_python_integer_types():
-    try:
-        isinstance(1, long)
-    except NameError:
-        return (int,)  # python 3
-    else:
-        return (int, long)  # python 2
+    warnings.warn(
+        "This is an internal cocotb function, use six.integer_types instead",
+        DeprecationWarning)
+    return integer_types
+
 
 # Simulator helper functions
 def get_sim_time(units=None):
@@ -457,6 +464,28 @@ def with_metaclass(meta, *bases):
     return type.__new__(metaclass, 'temporary_class', (), {})
 
 
+# this is six.raise_from
+if sys.version_info[:2] == (3, 2):
+    exec_("""def raise_from(value, from_value):
+    try:
+        if from_value is None:
+            raise value
+        raise value from from_value
+    finally:
+        value = None
+    """)
+elif sys.version_info[:2] > (3, 2):
+    exec_("""def raise_from(value, from_value):
+    try:
+        raise value from from_value
+    finally:
+        value = None
+    """)
+else:
+    def raise_from(value, from_value):
+        raise value
+
+
 class ParametrizedSingleton(type):
     """A metaclass that allows class construction to reuse an existing instance.
 
@@ -534,6 +563,31 @@ def reject_remaining_kwargs(name, kwargs):
         raise TypeError(
             '{}() got an unexpected keyword argument {!r}'.format(name, bad_arg)
         )
+
+
+class lazy_property(object):
+    """
+    A property that is executed the first time, then cached forever.
+
+    It does this by replacing itself on the instance, which works because
+    unlike `@property` it does not define __set__.
+
+    This should be used for expensive members of objects that are not always
+    used.
+    """
+    def __init__(self, fget):
+        self.fget = fget
+
+        # copy the getter function's docstring and other attributes
+        functools.update_wrapper(self, fget)
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+
+        value = self.fget(obj)
+        setattr(obj, self.fget.__name__, value)
+        return value
 
 
 if __name__ == "__main__":

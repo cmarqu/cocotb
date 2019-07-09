@@ -35,6 +35,7 @@ import functools
 import threading
 import inspect
 import textwrap
+import os
 
 from io import StringIO, BytesIO
 
@@ -42,8 +43,15 @@ import cocotb
 from cocotb.log import SimLog
 from cocotb.result import (TestComplete, TestError, TestFailure, TestSuccess,
                            ReturnValue, raise_error, ExternalException)
-from cocotb.utils import get_sim_time, with_metaclass, exec_
+from cocotb.utils import get_sim_time, with_metaclass, exec_, lazy_property
 from cocotb import outcomes
+
+# Sadly the Python standard logging module is very slow so it's better not to
+# make any calls by testing a boolean flag first
+if "COCOTB_SCHEDULER_DEBUG" in os.environ:
+    _debug = True
+else:
+    _debug = False
 
 
 def public(f):
@@ -87,9 +95,6 @@ class RunningCoroutine(object):
     def __init__(self, inst, parent):
         if hasattr(inst, "__name__"):
             self.__name__ = "%s" % inst.__name__
-            self.log = SimLog("cocotb.coroutine.%s" % self.__name__, id(self))
-        else:
-            self.log = SimLog("cocotb.coroutine.fail")
 
         if sys.version_info[:2] >= (3, 5) and inspect.iscoroutine(inst):
             self._natively_awaitable = True
@@ -106,9 +111,19 @@ class RunningCoroutine(object):
         self._outcome = None
 
         if not hasattr(self._coro, "send"):
-            self.log.error("%s isn't a valid coroutine! Did you use the yield "
-                           "keyword?" % self.funcname)
-            raise CoroutineComplete()
+            raise TypeError(
+                "%s isn't a valid coroutine! Did you use the yield "
+                "keyword?" % self.funcname
+            )
+
+    @lazy_property
+    def log(self):
+        # Creating a logger is expensive, only do it if we actually plan to
+        # log anything
+        if hasattr(self, "__name__"):
+            return SimLog("cocotb.coroutine.%s" % self.__name__, id(self))
+        else:
+            return SimLog("cocotb.coroutine.fail")
 
     @property
     def retval(self):
@@ -165,7 +180,8 @@ class RunningCoroutine(object):
             # already finished, nothing to kill
             return
 
-        self.log.debug("kill() called on coroutine")
+        if _debug:
+            self.log.debug("kill() called on coroutine")
         # todo: probably better to throw an exception for anyone waiting on the coroutine
         self._outcome = outcomes.Value(None)
         cocotb.scheduler.unschedule(self)
@@ -275,25 +291,15 @@ class coroutine(object):
 
     def __init__(self, func):
         self._func = func
-        self.log = SimLog("cocotb.coroutine.%s" % self._func.__name__, id(self))
         self.__name__ = self._func.__name__
         functools.update_wrapper(self, func)
 
+    @lazy_property
+    def log(self):
+        return SimLog("cocotb.coroutine.%s" % self._func.__name__, id(self))
+
     def __call__(self, *args, **kwargs):
-        try:
-            return RunningCoroutine(self._func(*args, **kwargs), self)
-        except Exception as e:
-            traceback.print_exc()
-            result = TestError(str(e))
-            if sys.version_info[0] >= 3:
-                buff = StringIO()
-                traceback.print_exc(file=buff)
-            else:
-                buff_bytes = BytesIO()
-                traceback.print_exc(file=buff_bytes)
-                buff = StringIO(buff_bytes.getvalue().decode("UTF-8"))
-            result.stderr.write(buff.getvalue())
-            raise result
+        return RunningCoroutine(self._func(*args, **kwargs), self)
 
     def __get__(self, obj, type=None):
         """Permit the decorator to be used on class methods
@@ -316,7 +322,10 @@ class function(object):
     """
     def __init__(self, func):
         self._func = func
-        self.log = SimLog("cocotb.function.%s" % self._func.__name__, id(self))
+
+    @lazy_property
+    def log(self):
+        return SimLog("cocotb.function.%s" % self._func.__name__, id(self))
 
     def __call__(self, *args, **kwargs):
 
@@ -430,7 +439,8 @@ class test(with_metaclass(_decorator_helper, coroutine)):
             Don't mark the result as a failure if the test fails.
         expect_error (bool, optional):
             Don't mark the result as an error if an error is raised.
-            This is for cocotb internal regression use.
+            This is for cocotb internal regression use 
+            when a simulator error is expected.
         skip (bool, optional):
             Don't execute this test as part of the regression.
         stage (int, optional)

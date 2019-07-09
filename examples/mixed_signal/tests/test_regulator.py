@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 Dataset = namedtuple('Dataset', 'time, trim, voltage, current')
 
-class MixedSignal_TB(object):
+class Regulator_TB(object):
     """Class for collecting testbench objects.
 
     Args:
@@ -141,15 +141,10 @@ class MixedSignal_TB(object):
 def run_test(dut):
     """Run test for mixed signal simulation."""
     
-    tb = MixedSignal_TB(dut)
+    tb = Regulator_TB(dut)
 
-    node = "mixed_signal_regulator.i_regulator.vout"
+    node = "tb_regulator.i_regulator.i_regulator_block.vout"
     
-    nodes_to_probe = [
-        # "mixed_signal_regulator.node1",  # NOTE: doesn't work in cocotb 1.0.1, because of nettype probably
-        "mixed_signal_regulator.i_regulator.vout",
-    ]  #: list of hierarchical nodes to probe
-
     probedata = []
 
     dummy = yield tb.get_sample_data(node)  # NOTE: dummy read apparently needed because of $cds_get_analog_value
@@ -179,18 +174,18 @@ def run_test(dut):
     datasets = yield tb.get_sample_data(node)
     probedata.extend(datasets)
 
-    tb.plot_data(datasets=probedata, graphfile="mixed_signal_regulator.png")
+    tb.plot_data(datasets=probedata, graphfile="regulator.png")
 
     # show automatic trimming
     target_volt = 3.013
-    print(f"test_mixed_signal_regulator.py ({now_utc()}): Running trimming algorithm for target voltage {target_volt:.3} V")
+    print(f"test_regulator.py ({now_utc()}): Running trimming algorithm for target voltage {target_volt:.3} V")
     best_trim_float = yield tb.find_trim_val(probed_node=node, target_volt=target_volt, trim_val_node=tb.dut.trim_val)
     best_trim_rounded = round(best_trim_float)
     tb.dut.trim_val <= best_trim_rounded
     yield Timer(tb.settling_time_ns, units='ns')    
     datasets = yield tb.get_sample_data(node)
     trimmed_volt = datasets[0].voltage
-    print((f"test_mixed_signal_regulator.py ({now_utc()}): Determined best trimming value to be {best_trim_rounded} "
+    print((f"test_regulator.py ({now_utc()}): Determined best trimming value to be {best_trim_rounded} "
            f"which gives a trimmed voltage of {trimmed_volt:.3} V (difference to target {trimmed_volt-target_volt:.3} V)"))
     
     
