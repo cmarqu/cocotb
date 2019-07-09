@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 Dataset = namedtuple('Dataset', 'time, trim, voltage, current')
 
-class MixedSignal_TB(object):
+class MixedSignalRegulator_TB(object):
     """Class for collecting testbench objects.
 
     Args:
@@ -141,7 +141,7 @@ class MixedSignal_TB(object):
 def run_test(dut):
     """Run test for mixed signal simulation."""
     
-    tb = MixedSignal_TB(dut)
+    tb = MixedSignalRegulator_TB(dut)
 
     node = "mixed_signal_regulator.i_regulator.vout"
     

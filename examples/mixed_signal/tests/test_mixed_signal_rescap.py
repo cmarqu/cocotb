@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 Dataset = namedtuple('Dataset', 'time, voltage, current')
 
-class MixedSignal_TB(object):
+class MixedSignalResCap_TB(object):
 
     def __init__(self, dut):
         self.dut = dut
@@ -80,13 +80,13 @@ class MixedSignal_TB(object):
 
 @cocotb.coroutine
 def run_test(dut):
-    """Run test for mixed signal simulation."""
+    """Run test for mixed signal resistor/capacitor simulation."""
     
-    tb = MixedSignal_TB(dut)
+    tb = MixedSignalResCap_TB(dut)
 
     nodes_to_probe = [
-        "mixed_signal.i_resistor.p",
-        "mixed_signal.i_capacitor.p",
+        "mixed_signal_rescap.i_resistor.p",
+        "mixed_signal_rescap.i_capacitor.p",
     ]
      
     probedata = []
@@ -109,7 +109,7 @@ def run_test(dut):
     data = yield tb.get_sample_data(steps=80, delay_ns=5, nodes=nodes_to_probe)
     probedata.extend(data)
     
-    tb.plot_data(datasets=probedata, nodes=nodes_to_probe, graphfile="mixed_signal.png")
+    tb.plot_data(datasets=probedata, nodes=nodes_to_probe, graphfile="mixed_signal_rescap.png")
 
 
 

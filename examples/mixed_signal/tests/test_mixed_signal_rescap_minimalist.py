@@ -2,13 +2,13 @@ import cocotb
 from cocotb.triggers import Timer
 
 @cocotb.test()
-def mixed_signal_test(dut):
-    """Mixed signal simulation."""
+def mixed_signal_rescap_minimalist_test(dut):
+    """Mixed signal resistor/capacitor simulation, minimalistic."""
 
     dut.vdd_val <= 7.7
     dut.gnd_val <= 0.0
 
-    dut.i_analog_probe.node_to_probe <= "mixed_signal.i_capacitor.p"
+    dut.i_analog_probe.node_to_probe <= "mixed_signal_rescap.i_capacitor.p"
 
     yield Timer(50, units='ns')
 

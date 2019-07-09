@@ -41,7 +41,7 @@ from cocotb.log import SimLog
 from cocotb.result import raise_error, ReturnValue
 from cocotb.utils import (
     get_sim_steps, get_time_from_sim_steps, with_metaclass,
-    ParametrizedSingleton, exec_
+    ParametrizedSingleton, exec_, lazy_property
 )
 from cocotb import decorators
 from cocotb import outcomes
@@ -55,9 +55,12 @@ class Trigger(object):
     """Base class to derive from."""
     
     def __init__(self):
-        self.log = SimLog("cocotb.%s" % (self.__class__.__name__), id(self))
         self.signal = None
         self.primed = False
+
+    @lazy_property
+    def log(self):
+        return SimLog("cocotb.%s" % (self.__class__.__name__), id(self))
 
     def prime(self, *args):
         """FIXME: document"""
@@ -276,34 +279,31 @@ class _Event(PythonTrigger):
 
     FIXME: This will leak - need to use peers to ensure everything is removed
     """
-    
+
     def __init__(self, parent):
         PythonTrigger.__init__(self)
         self.parent = parent
 
     def prime(self, callback):
         self._callback = callback
-        self.parent.prime(callback, self)
+        self.parent._prime_trigger(self, callback)
         Trigger.prime(self)
 
     def __call__(self):
         self._callback(self)
 
 
-class Event(PythonTrigger):
+class Event(object):
     """Event to permit synchronisation between two coroutines."""
-    
+
     def __init__(self, name=""):
-        PythonTrigger.__init__(self)
         self._pending = []
         self.name = name
         self.fired = False
         self.data = None
 
-    def prime(self, callback, trigger):
-        """FIXME: document"""
+    def _prime_trigger(self, trigger, callback):
         self._pending.append(trigger)
-        Trigger.prime(self)
 
     def set(self, data=None):
         """Wake up any coroutines blocked on this event."""
@@ -348,33 +348,30 @@ class _Lock(PythonTrigger):
 
     FIXME: This will leak - need to use peers to ensure everything is removed.
     """
-    
+
     def __init__(self, parent):
         PythonTrigger.__init__(self)
         self.parent = parent
 
     def prime(self, callback):
         self._callback = callback
-        self.parent.prime(callback, self)
+        self.parent._prime_trigger(self, callback)
         Trigger.prime(self)
 
     def __call__(self):
         self._callback(self)
 
 
-class Lock(PythonTrigger):
+class Lock(object):
     """Lock primitive (not re-entrant)."""
 
     def __init__(self, name=""):
-        PythonTrigger.__init__(self)
         self._pending_unprimed = []
         self._pending_primed = []
         self.name = name
         self.locked = False
 
-    def prime(self, callback, trigger):
-        Trigger.prime(self)
-
+    def _prime_trigger(self, trigger, callback):
         self._pending_unprimed.remove(trigger)
 
         if not self.locked:
@@ -418,13 +415,20 @@ class Lock(PythonTrigger):
 
 
 class NullTrigger(Trigger):
-    """Trigger for internal interfacing use call the callback as soon
-    as it is primed and then remove itself from the scheduler.
     """
-    def __init__(self, name=""):
-        Trigger.__init__(self)
+    A trigger that fires instantly, primarily for internal scheduler use.
+    """
+    def __init__(self, name="", outcome=None):
+        super(NullTrigger, self).__init__()
         self._callback = None
         self.name = name
+        self.__outcome = outcome
+
+    @property
+    def _outcome(self):
+        if self.__outcome is not None:
+            return self.__outcome
+        return super(NullTrigger, self)._outcome
 
     def prime(self, callback):
         callback(self)
@@ -506,6 +510,18 @@ class _AggregateWaitable(Waitable):
                 )
 
 
+@decorators.coroutine
+def _wait_callback(trigger, callback):
+    """
+    Wait for a trigger, and call `callback` with the outcome of the yield
+    """
+    try:
+        ret = outcomes.Value((yield trigger))
+    except BaseException as exc:
+        ret = outcomes.Error(exc)
+    callback(ret)
+
+
 class Combine(_AggregateWaitable):
     """
     Waits until all the passed triggers have fired.
@@ -520,15 +536,13 @@ class Combine(_AggregateWaitable):
 
         # start a parallel task for each trigger
         for t in triggers:
-            @cocotb.coroutine
-            def waiter(t=t):
-                try:
-                    yield t
-                finally:
-                    triggers.remove(t)
-                    if not triggers:
-                        e.set()
-            waiters.append(cocotb.fork(waiter()))
+            # t=t is needed for the closure to bind correctly
+            def on_done(ret, t=t):
+                triggers.remove(t)
+                if not triggers:
+                    e.set()
+                ret.get()  # re-raise any exception
+            waiters.append(cocotb.fork(_wait_callback(t, on_done)))
 
         # wait for the last waiter to complete
         yield e.wait()
@@ -551,6 +565,7 @@ class First(_AggregateWaitable):
             t2 = Timer(10, units='ps')
             t_ret = yield First(t1, t2)
     """
+
     @decorators.coroutine
     def _wait(self):
         waiters = []
@@ -559,17 +574,10 @@ class First(_AggregateWaitable):
         completed = []
         # start a parallel task for each trigger
         for t in triggers:
-            @cocotb.coroutine
-            def waiter(t=t):
-                # capture the outcome of this trigger
-                try:
-                    ret = outcomes.Value((yield t))
-                except BaseException as exc:
-                    ret = outcomes.Error(exc)
-
+            def on_done(ret):
                 completed.append(ret)
                 e.set()
-            waiters.append(cocotb.fork(waiter()))
+            waiters.append(cocotb.fork(_wait_callback(t, on_done)))
 
         # wait for a waiter to complete
         yield e.wait()

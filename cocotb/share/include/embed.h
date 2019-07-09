@@ -32,6 +32,7 @@
 
 #include <gpi.h>
 #include <gpi_logging.h>
+#include <vpi_user_ext.h>
 #include <sv_vpi_user.h>
 
 #ifdef __cplusplus

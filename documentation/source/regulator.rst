@@ -16,7 +16,7 @@ The captured values can be read on real-value signals ``voltage`` and ``current`
 
 Here is the capture code for ``voltage`` with the "user-interface" highlighted:
 
-.. literalinclude:: ../../hdl/analog_probe_cadence.sv
+.. literalinclude:: ../../examples/mixed_signal/hdl/analog_probe_cadence.sv
    :caption: analog_probe_cadence.sv
    :language: systemverilog
    :lines: 3-15
@@ -26,9 +26,9 @@ Here is the capture code for ``voltage`` with the "user-interface" highlighted:
 
 The cocotb part of the testbench provides functions to:
 
-* do the sampling of voltage and current of a given node (:meth:`~.get_sample_data()`),
-* trim the regulator as close as possible to a target voltage within a given trim value range ( :meth:`~.find_trim_val()`), and
-* plot the sampled data to a file (:meth:`~.plot_data()`).
+* do the sampling of voltage and current of a given node (:meth:`~test_mixed_signal_regulator.MixedSignalRegulator_TB.get_sample_data()`),
+* trim the regulator as close as possible to a target voltage within a given trim value range ( :meth:`~test_mixed_signal_regulator.MixedSignalRegulator_TB.find_trim_val()`), and
+* plot the sampled data to a file (:meth:`~test_mixed_signal_regulator.MixedSignalRegulator_TB.plot_data()`).
 
 .. todo:: Expand
 
@@ -41,19 +41,19 @@ cocotb Testbench
 
 .. currentmodule:: test_mixed_signal_regulator
 
-.. autoclass:: MixedSignal_TB
-               
+.. autoclass:: MixedSignalRegulator_TB
+
     .. automethod:: get_sample_data(nodes, num=1, delay_ns=1)
     .. automethod:: find_trim_val(probed_node, target_volt, trim_val_node, trim_val_signed=True, trim_val_min=None, trim_val_max=None)
     .. automethod:: plot_data(datasets, graphfile="cocotb_plot.png")
 
-                    
-.. autoclass:: PlotDataset
+
+.. autoclass:: Dataset
     :show-inheritance:
     :members:
     :member-order: bysource
-               
-                    
+
+
 Indices and tables
 ------------------
 

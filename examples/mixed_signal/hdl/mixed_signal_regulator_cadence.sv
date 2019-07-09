@@ -1,5 +1,4 @@
-import cds_rnm_pkg::*;
-nettype wreal1driver voltage_net;
+import nettypes_pkg::*;
 
 module mixed_signal_regulator;
 

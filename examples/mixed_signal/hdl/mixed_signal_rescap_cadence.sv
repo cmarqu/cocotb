@@ -1,7 +1,7 @@
 import cds_rnm_pkg::*;
-nettype wreal1driver voltage_net;
+import nettypes_pkg::*;
 
-module mixed_signal;
+module mixed_signal_rescap;
 
   voltage_net vdd, gnd;
   real vdd_val, gnd_val = 0.0;

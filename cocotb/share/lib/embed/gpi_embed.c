@@ -223,16 +223,16 @@ int embed_sim_init(gpi_sim_info_t *info)
         fprintf(stderr, "Failed to to get simlog object\n");
     }
 
-    simlog_func = PyObject_GetAttrString(simlog_obj, "_printRecord");
+    simlog_func = PyObject_GetAttrString(simlog_obj, "_logFromC");
     if (simlog_func == NULL) {
         PyErr_Print();
-        fprintf(stderr, "Failed to get the _printRecord method");
+        fprintf(stderr, "Failed to get the _logFromC method");
         goto cleanup;
     }
 
     if (!PyCallable_Check(simlog_func)) {
         PyErr_Print();
-        fprintf(stderr, "_printRecord is not callable");
+        fprintf(stderr, "_logFromC is not callable");
         goto cleanup;
     }
 
@@ -240,16 +240,16 @@ int embed_sim_init(gpi_sim_info_t *info)
 
     Py_DECREF(simlog_func);
 
-    simlog_func = PyObject_GetAttrString(simlog_obj, "_willLog");
+    simlog_func = PyObject_GetAttrString(simlog_obj, "isEnabledFor");
     if (simlog_func == NULL) {
         PyErr_Print();
-        fprintf(stderr, "Failed to get the _willLog method");
+        fprintf(stderr, "Failed to get the isEnabledFor method");
         goto cleanup;
     }
 
     if (!PyCallable_Check(simlog_func)) {
         PyErr_Print();
-        fprintf(stderr, "_willLog is not callable");
+        fprintf(stderr, "isEnabledFor is not callable");
         goto cleanup;
     }
 
@@ -374,6 +374,7 @@ void embed_sim_event(gpi_event_t level, const char *msg)
             PyTuple_SetItem(fArgs, 1, PyString_FromString("No message provided"));
         PyObject *pValue = PyObject_CallObject(pEventFn, fArgs);
         if (!pValue) {
+            PyErr_Print();
             LOG_ERROR("Passing event to upper layer failed");
         }
 
