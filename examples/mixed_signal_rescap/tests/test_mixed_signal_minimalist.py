@@ -8,7 +8,7 @@ def mixed_signal_test(dut):
     dut.vdd_val <= 7.7
     dut.gnd_val <= 0.0
 
-    dut.i_analog_probe.hierarchy_to_probe <= "mixed_signal.i_capacitor.p"
+    dut.i_analog_probe.node_to_probe <= "mixed_signal.i_capacitor.p"
 
     yield Timer(50, units='ns')
 

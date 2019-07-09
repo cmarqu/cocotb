@@ -27,6 +27,6 @@ module mixed_signal;
      .n (gnd)
      );
 
-  analog_probe_cadence i_analog_probe ();
+  analog_probe i_analog_probe ();
 
 endmodule

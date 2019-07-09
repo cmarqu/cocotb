@@ -4,25 +4,79 @@ from cocotb.regression import TestFactory
 from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time
 
+from collections import namedtuple
+
 from itertools import cycle
 
 import matplotlib
 import matplotlib.pyplot as plt
 
+Dataset = namedtuple('Dataset', 'time, voltage, current')
+
 class MixedSignal_TB(object):
 
     def __init__(self, dut):
         self.dut = dut
-        self.probenode = dut.i_analog_probe
+        self.analog_probe = dut.i_analog_probe  #: The instance name of the analog probe module.
         self.togglestream = cycle(range(2))  # toggle between 0 and 1
     
-    def collect_data(self):
-        """Collect data from *probenode* of class."""
-        voltage = self.probenode.voltage.value
-        current = self.probenode.current.value
-        self.dut._log.info("{}={} V  {} A".format(self.probenode, voltage, current))
-        return (get_sim_time(units='ns'), voltage, current)
+    def probe_values(self):
+        """Collect data from instance pointed to by :attr:`analog_probe`."""
+        voltage = self.analog_probe.voltage.value
+        current = self.analog_probe.current.value
+        self.dut._log.info("{}={} V  {} A".format(self.analog_probe, voltage, current))
+        return Dataset(time=get_sim_time(units='ns'),
+                       voltage=voltage,
+                       current=current)
     
+    @cocotb.coroutine
+    def _get_single_sample(self, node):
+        toggle = next(self.togglestream)
+        self.dut.i_analog_probe.node_to_probe <= node
+        self.analog_probe.probe_voltage_toggle <= toggle
+        self.analog_probe.probe_current_toggle <= toggle
+        yield Timer(5, units='ps')  # NOTE: needs some time for some reason
+        dataset = self.probe_values()
+        self.dut._log.debug(f"{self.analog_probe.node_to_probe}={dataset.voltage} V, {dataset.current} A")
+        return dataset
+        
+    @cocotb.coroutine
+    def get_sample_data(self, steps=50, delay_ns=5, nodes=[]):
+        datasets = []
+        for idx in range(steps):
+            for node in nodes:
+                dataset = yield self._get_single_sample(node)
+                yield Timer(delay_ns, units='ns')
+                datasets.append(dataset)
+        return datasets
+        
+    def plot_data(self, datasets, nodes, graphfile="cocotb_plot.png"):
+        """Plot and save a graph to file *graphfile* with voltage and current value (contained in *datasets*)."""
+        
+        time, voltage, current = zip(*datasets)
+    
+        fig, ax1 = plt.subplots()
+        color = 'tab:red'
+        ax1.set_title(f"Probed nodes: {nodes}")
+        ax1.set_xlabel('Time (ns)')
+        ax1.set_ylabel('Voltage (V)', color=color)
+        ax1.plot(time, voltage, color=color, marker='.', markerfacecolor='black', linewidth=1)
+        ax1.tick_params(axis='y', labelcolor=color)
+        ax1.axhline(linestyle=':', color='gray')
+        
+        ax2 = ax1.twinx()  # instantiate a second axis that shares the same x-axis
+        color = 'tab:blue'
+        ax2.set_ylabel('Current (A)', color=color)  # we already handled the x-label with ax1
+        ax2.plot(time, current, color=color, marker='.', markerfacecolor='black', linewidth=1)
+        ax2.tick_params(axis='y', labelcolor=color)
+        
+        mpl_align_yaxis(ax1, 0, ax2, 0)
+        fig.tight_layout()  # otherwise the right y-label is slightly clipped
+        fig.set_size_inches(14, 8)
+        
+        self.dut._log.info("Writing file {}".format(graphfile))
+        fig.savefig(graphfile)
+        
 
 @cocotb.coroutine
 def run_test(dut):
@@ -30,29 +84,14 @@ def run_test(dut):
     
     tb = MixedSignal_TB(dut)
 
-    hierarchies_to_probe = ["mixed_signal.i_capacitor.p",
-                            "mixed_signal.i_resistor.p",
+    nodes_to_probe = [
+        "mixed_signal.i_resistor.p",
+        "mixed_signal.i_capacitor.p",
     ]
      
-    def get_single_sample():
-        toggle = next(tb.togglestream)
-        tb.probenode.probe_voltage_toggle <= toggle
-        tb.probenode.probe_current_toggle <= toggle
-        dataset = tb.collect_data()
-        return dataset
-        
-    @cocotb.coroutine
-    def get_sample_data_multi(steps=50, delay_ns=5, hierarchy_list=[]):
-        data = []
-        for idx in range(steps):
-            for hierarchy in hierarchy_list:
-                tb.dut.i_analog_probe.hierarchy_to_probe <= hierarchy
-                dataset = get_single_sample()
-                yield Timer(delay_ns, units='ns')
-                data.append(dataset)
-        return data
-        
     probedata = []
+
+    dummy = yield tb.get_sample_data(nodes=nodes_to_probe)  # NOTE: dummy read apparently needed because of $cds_get_analog_value
 
     yield Timer(5, units='ns')
     
@@ -60,50 +99,23 @@ def run_test(dut):
     tb.dut.gnd_val <= 0.0
     tb.dut._log.info("Setting vdd={} V".format(tb.dut.vdd_val.value))
 
-    data = yield get_sample_data_multi(steps=80, delay_ns=5, hierarchy_list=hierarchies_to_probe)
+    data = yield tb.get_sample_data(steps=80, delay_ns=5, nodes=nodes_to_probe)
     probedata.extend(data)
     
     tb.dut.vdd_val <= -3.33
     tb.dut.gnd_val <= 0.0
     tb.dut._log.info("Setting vdd={} V".format(tb.dut.vdd_val.value))
 
-    data = yield get_sample_data_multi(steps=80, delay_ns=5, hierarchy_list=hierarchies_to_probe)
+    data = yield tb.get_sample_data(steps=80, delay_ns=5, nodes=nodes_to_probe)
     probedata.extend(data)
     
-        
-    mpl_plot_data(dut=tb.dut, data=probedata, nodename=tb.probenode)
+    tb.plot_data(datasets=probedata, nodes=nodes_to_probe, graphfile="mixed_signal.png")
+
 
 
 # register the test
 factory = TestFactory(run_test)
 factory.generate_tests()
-
-
-def mpl_plot_data(dut, data, nodename, graphfile="mixed_signal.png"):
-    """Plot and save a graph with voltage and current over time."""
-    time, voltage, current = zip(*data)
-    
-    fig, ax1 = plt.subplots()
-    color = 'tab:red'
-    ax1.set_title('Node {}'.format(nodename))
-    ax1.set_xlabel('Time (ns)')
-    ax1.set_ylabel('Voltage (V)', color=color)
-    ax1.plot(time, voltage, color=color, marker='.', markerfacecolor='black', linewidth=1)
-    ax1.tick_params(axis='y', labelcolor=color)
-    ax1.axhline(linestyle=':', color='gray')
-    
-    ax2 = ax1.twinx()  # instantiate a second axis that shares the same x-axis
-    color = 'tab:blue'
-    ax2.set_ylabel('Current (A)', color=color)  # we already handled the x-label with ax1
-    ax2.plot(time, current, color=color, marker='.', markerfacecolor='black', linewidth=1)
-    ax2.tick_params(axis='y', labelcolor=color)
-    
-    mpl_align_yaxis(ax1, 0, ax2, 0)
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    fig.set_size_inches(14, 8)
-    
-    dut._log.info("Writing file {}".format(graphfile))
-    fig.savefig(graphfile)
 
     
 def mpl_align_yaxis(ax1, v1, ax2, v2):

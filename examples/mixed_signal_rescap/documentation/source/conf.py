@@ -55,7 +55,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'cocotb - mixed_signal_regulator'
+project = u'cocotb - mixed_signal_rescap'
 copyright = u'2014-{0}, PotentialVentures'.format(datetime.datetime.now().year)
 
 # The version info for the project you're documenting, acts as replacement for
@@ -138,7 +138,7 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -182,7 +182,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'cocotb_mixedsignalregulatordoc'
+htmlhelp_basename = 'cocotb_mixedsignalrescapdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -201,7 +201,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'cocotb_mixedsignalregulator.tex', u'cocotb mixed_signal_regulator Documentation',
+  ('index', 'cocotb_mixedsignalrescap.tex', u'cocotb mixed_signal_rescap Documentation',
    u'PotentialVentures', 'manual'),
 ]
 
@@ -231,7 +231,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'cocotb_mixedsignalregulator', u'cocotb mixed_signal_regulator Documentation',
+    ('index', 'cocotb_mixedsignalrescap', u'cocotb mixed_signal_rescap Documentation',
      [u'PotentialVentures'], 1)
 ]
 
@@ -245,7 +245,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'cocotb_mixedsignalregulator', u'cocotb mixed_signal_regulator Documentation',
+  ('index', 'cocotb_mixedsignalrescap', u'cocotb mixed_signal_rescap Documentation',
    u'PotentialVentures', 'cocotb', 'Coroutine Cosimulation TestBench \
      environment for efficient verification of RTL using Python.',
    'Miscellaneous'),

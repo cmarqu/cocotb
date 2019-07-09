@@ -1,7 +1,6 @@
 import cocotb
-from cocotb.clock import Clock
 from cocotb.regression import TestFactory
-from cocotb.triggers import Timer, NextTimeStep
+from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time
 
 from collections import namedtuple
@@ -13,7 +12,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-PlotDataset = namedtuple('PlotDataset', 'time, trim, voltage, current')
+Dataset = namedtuple('Dataset', 'time, trim, voltage, current')
 
 class MixedSignal_TB(object):
     """Class for collecting testbench objects.
@@ -34,10 +33,10 @@ class MixedSignal_TB(object):
         """Collect data from instance pointed to by :attr:`analog_probe`."""
         voltage = self.analog_probe.voltage.value
         current = self.analog_probe.current.value
-        return PlotDataset(time=get_sim_time(units='ns'),
-                           trim=self.dut.trim_val.value.signed_integer,
-                           voltage=voltage,
-                           current=current)
+        return Dataset(time=get_sim_time(units='ns'),
+                       trim=self.dut.trim_val.value.signed_integer,
+                       voltage=voltage,
+                       current=current)
     
     @cocotb.coroutine
     def _get_single_sample(self, node):
@@ -56,7 +55,7 @@ class MixedSignal_TB(object):
         """For all *nodes*, get *num* samples, spaced *delay_ns* apart.
 
         Yields:
-            list: List (*num* samples long) of :any:`PlotDataset` for all *nodes*.
+            list: List (*num* samples long) of :any:`Dataset` for all *nodes*.
         """
         if not isinstance(nodes, list):  # single element? make it a list
             _nodes = [nodes]
@@ -72,7 +71,7 @@ class MixedSignal_TB(object):
         return datasets
 
     @cocotb.coroutine
-    def find_trim_val(self, probed_node, target_volt, trim_val_node, trim_val_signed=True, trim_val_min=None, trim_val_max=None):
+    def find_trim_val(self, probed_node, target_volt, trim_val_node, trim_val_repr='TWOS_COMPLEMENT'):
         """Calculate best trimming value for *target_volt*.
         Assumes a linear behaviour.
 
@@ -80,48 +79,33 @@ class MixedSignal_TB(object):
             probed_node: The node to probe for the trimmed voltage.
             target_volt (float): The target voltage at *probed_node*.
             trim_val_node: The node to apply the trim value to.
-            trim_val_signed (bool, optional): Flag indication whether the *trim_val_node* has an 
-                unsigned or signed encoding.
-            trim_val_min (int, optional): The minimum value to apply to *trim_val_node*.
-            trim_val_max (int, optional): The maximum value to apply to *trim_val_node*.
+            trim_val_repr (str, optional): String indicating whether the *trim_val_node* has an
+                'UNSIGNED' or 'TWOS_COMPLEMENT' representation.
 
         Yields:
             float: The calculated best value for *trim_val_node*.
         """
-        # find _trim_val_min/_trim_val_max based on bit length if needed:
-        if trim_val_min is not None:
-            _trim_val_min = trim_val_min
-        else:
-            if trim_val_signed:
-                _trim_val_min = -2**(trim_val_node.value.n_bits-1)
-            else:  # unsigned 
-                _trim_val_min = 0
-        if trim_val_max is not None:
-            _trim_val_max = trim_val_max
-        else:
-            if trim_val_signed:
-                _trim_val_max = 2**(trim_val_node.value.n_bits-1)-1
-            else:  # unsigned
-                _trim_val_max = 2**trim_val_node.value.n_bits-1
+        # find trim_val_min/trim_val_max based on bit length:
+        assert trim_val_repr in ('UNSIGNED', 'TWOS_COMPLEMENT')
+        trim_val_min = min_val(trim_val_node, trim_val_repr)
+        trim_val_max = max_val(trim_val_node, trim_val_repr)
         # the actual trimming procedure:
-        trim_val_node <= _trim_val_min
+        trim_val_node <= trim_val_min
         yield Timer(self.settling_time_ns, units='ns')
         sample = yield self.get_sample_data(probed_node)
         volt_min = sample[0].voltage
-        trim_val_node <= _trim_val_max
+        trim_val_node <= trim_val_max
         yield Timer(self.settling_time_ns, units='ns')
         sample = yield self.get_sample_data(probed_node)
         volt_max = sample[0].voltage
         if target_volt > volt_max:
-            self.dut._log.debug(f"target_volt={target_volt} > volt_max={volt_max}, returning minimum trim value {_trim_val_max}")
-            return _trim_val_max
+            self.dut._log.debug(f"target_volt={target_volt} > volt_max={volt_max}, returning minimum trim value {trim_val_max}")
+            return trim_val_max
         if target_volt < volt_min:
-            self.dut._log.debug(f"target_volt={target_volt} < volt_min={volt_min}, returning maximum trim value {_trim_val_min}")
-            return _trim_val_min
-        trim_diff = _trim_val_max - _trim_val_min
-        volt_diff = volt_max - volt_min
-        ratio = trim_diff/volt_diff
-        target_trim = (target_volt-volt_min)*ratio + _trim_val_min
+            self.dut._log.debug(f"target_volt={target_volt} < volt_min={volt_min}, returning maximum trim value {trim_val_min}")
+            return trim_val_min
+        slope = (trim_val_max - trim_val_min)/(volt_max - volt_min)
+        target_trim = (target_volt-volt_min)*slope + trim_val_min
         return target_trim
         
     def plot_data(self, datasets, graphfile="cocotb_plot.png"):
@@ -168,7 +152,7 @@ def run_test(dut):
 
     probedata = []
 
-    dummy = yield tb.get_sample_data(node)  # FIXME: why is this dummy read needed? Because of $cds_get_analog_value?
+    dummy = yield tb.get_sample_data(node)  # NOTE: dummy read apparently needed because of $cds_get_analog_value
 
     tb.dut._log.setLevel(logging.DEBUG)
 
@@ -209,24 +193,13 @@ def run_test(dut):
     print((f"test_mixed_signal_regulator.py ({now_utc()}): Determined best trimming value to be {best_trim_rounded} "
            f"which gives a trimmed voltage of {trimmed_volt:.3} V (difference to target {trimmed_volt-target_volt:.3} V)"))
     
-    # show automatic trimming, limited trim range
-    target_volt = 2.39
-    print(f"test_mixed_signal_regulator.py ({now_utc()}): Running trimming algorithm for target voltage {target_volt:.3} V")
-    best_trim_float = yield tb.find_trim_val(probed_node=node, target_volt=target_volt, trim_val_node=tb.dut.trim_val, trim_val_min=-4, trim_val_max=4)
-    best_trim_rounded = round(best_trim_float)
-    tb.dut.trim_val <= best_trim_rounded
-    yield Timer(tb.settling_time_ns, units='ns')    
-    datasets = yield tb.get_sample_data(node)
-    trimmed_volt = datasets[0].voltage
-    print((f"test_mixed_signal_regulator.py ({now_utc()}): Determined best trimming value to be {best_trim_rounded} "
-           f"which gives a trimmed voltage of {trimmed_volt:.3} V (difference to target {trimmed_volt-target_volt:.3} V)"))
-    
     
 # register the test
 factory = TestFactory(run_test)
 factory.generate_tests()
 
-    
+
+# TODO: move to some utils package
 def _mpl_align_yaxis(ax1, v1, ax2, v2):
     """Adjust *ax2* ylimit so that *v2* in *ax2* is aligned to *v1* in *ax1*."""
     _, y1 = ax1.transData.transform((0, v1))
@@ -253,3 +226,22 @@ def _mpl_adjust_yaxis(ax, ydiff, v):
 def now_utc():
     """Return current ISO8601 date and time in the UTC timezone."""
     return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc, microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+# FIXME: use cocotb.binary.BinaryRepresentation?
+def min_val(vector, representation='UNSIGNED'):
+    """Return minimum value that can be stored in *vector* given its *representation*."""
+    assert representation in ('UNSIGNED', 'TWOS_COMPLEMENT')
+    if representation == 'TWOS_COMPLEMENT':
+        return -2**(vector.value.n_bits-1)
+    else:
+        return 0
+
+
+def max_val(vector, representation='UNSIGNED'):
+    """Return maximum value that can be stored in *vector* given its *representation*."""
+    assert representation in ('UNSIGNED', 'TWOS_COMPLEMENT')
+    if representation == 'TWOS_COMPLEMENT':
+        return 2**(vector.value.n_bits-1)-1
+    else:
+        return 2**(vector.value.n_bits-1)
