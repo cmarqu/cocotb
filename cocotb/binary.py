@@ -390,7 +390,7 @@ class BinaryValue(object):
     def hex(self):
         try:
             return hex(self.get_value())
-        except:
+        except Exception:
             return hex(int(self.binstr, 2))
 
     def __le__(self, other):
@@ -509,7 +509,7 @@ class BinaryValue(object):
         return self
 
     def __rpow__(self, other):
-        return pow(other, self.integer, modulo)
+        return pow(other, self.integer)
 
     def __lshift__(self, other):
         return int(self) << int(other)

@@ -236,8 +236,8 @@ class AvalonMemory(BusDriver):
     _optional_signals = ["write", "read", "writedata", "readdatavalid",
                          "readdata", "waitrequest", "burstcount", "byteenable"]
     _avalon_properties = {
-            "burstCountUnits": "symbols", # symbols or words
-            "addressUnits": "symbols",    # symbols or words
+            "burstCountUnits": "symbols",  # symbols or words
+            "addressUnits": "symbols",     # symbols or words
             "readLatency": 1,    # number of cycles
             "WriteBurstWaitReq": True,  # generate random waitrequest
             "MaxWaitReqLen": 4,  # maximum value of waitrequest
@@ -811,7 +811,7 @@ class AvalonSTPkts(ValidatedBusDriver):
                 self.on -= 1
 
             if not hasattr(word, "valid"):
-               self.bus.valid <= 1
+                self.bus.valid <= 1
             else:
                 self.bus <= word
 
