@@ -15,7 +15,7 @@ Overview Schematic
 The Design
 ----------
 
-The design ``i_regulator`` consists of a regulator model written in Verilog-AMS (instance name ``i_regulator_block``),
+The design ``i_regulator`` consists of a trimmable regulator model written in Verilog-AMS (instance name ``i_regulator_block``),
 and load resistor (instance name ``i_resistor``).
 
 .. literalinclude:: ../../examples/mixed_signal/hdl/regulator.sv
@@ -67,6 +67,11 @@ The cocotb part of the testbench provides functions to:
 * do the sampling of voltage and current of a given node (:meth:`~test_regulator.Regulator_TB.get_sample_data()`),
 * trim the regulator as close as possible to a target voltage within a given trim value range ( :meth:`~test_regulator.Regulator_TB.find_trim_val()`), and
 * plot the sampled data to a file (:meth:`~test_regulator.Regulator_TB.plot_data()`).
+
+FIXME: describe test_regulator_minimalist.py
+  
+The testcase first sets a ``vdd`` voltage and three different trim values, saving the resulting output voltage ``vout`` for each.
+It then runs an automatic trimming routine to find the best trim value for a given target voltage.
 
 .. todo:: Expand
 

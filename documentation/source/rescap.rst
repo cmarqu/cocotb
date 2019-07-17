@@ -70,6 +70,9 @@ The cocotb part of the testbench provides functions to:
 * do the sampling of voltage and current of a given node (:meth:`~test_rescap.ResCap_TB.get_sample_data()`),
 * plot the sampled data to a file (:meth:`~test_rescap.ResCap_TB.plot_data()`).
 
+ 
+FIXME: describe test_rescap_minimalist.py
+
 The testcase supplies first a positive voltage to the circuit, followed by a negative voltage,
 thus charging the capacitor in opposite directions.
 The following image shows the charge curve.
