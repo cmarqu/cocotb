@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2013, 2018, 2019 Potential Ventures Ltd
+* Copyright (c) 2013, 2018 Potential Ventures Ltd
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without

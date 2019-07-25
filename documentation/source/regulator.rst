@@ -1,7 +1,7 @@
 The cocotb ``regulator`` Testbench
 ===============================================
 
-.. versionadded:: 1.2
+.. versionadded:: 1.3
 
 This is the testbench :mod:`test_regulator` for the design ``regulator`` showing
 how cocotb can be used in an analog-mixed signal (AMS) simulation.
@@ -86,9 +86,9 @@ cocotb Testbench
 
 .. autoclass:: Regulator_TB
 
-    .. automethod:: get_sample_data(nodes, num=1, delay_ns=1)
-    .. automethod:: find_trim_val(probed_node, target_volt, trim_val_node, trim_val_signed=True, trim_val_min=None, trim_val_max=None)
-    .. automethod:: plot_data(datasets, graphfile="cocotb_plot.png")
+    .. automethod:: get_sample_data(nodes, num, delay_ns)
+    .. automethod:: find_trim_val(probed_node, target_volt, trim_val_node, trim_val_signed, trim_val_min, trim_val_max)
+    .. automethod:: plot_data(datasets, graphfile)
 
 
 .. autoclass:: Dataset

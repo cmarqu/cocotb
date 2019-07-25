@@ -199,7 +199,7 @@ be used):
 Using cocotb
 ============
 
-A typical cocotb testbench requires no additional RTL code.
+A typical cocotb testbench requires no additional RTL code (though you can of course).
 The Design Under Test (DUT) is instantiated as the toplevel in the simulator
 without any wrapper code.
 Cocotb drives stimulus onto the inputs to the DUT and monitors the outputs

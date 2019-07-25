@@ -1,7 +1,7 @@
 The cocotb ``rescap`` Testbench
 ===============================
 
-.. versionadded:: 1.2
+.. versionadded:: 1.3
 
 This is the testbench :mod:`test_rescap` for the design ``rescap`` showing
 how cocotb can be used in an analog-mixed signal (AMS) simulation.
@@ -93,8 +93,8 @@ cocotb Testbench
 
 .. autoclass:: ResCap_TB
 
-    .. automethod:: get_sample_data(nodes, num=1, delay_ns=1)
-    .. automethod:: plot_data(datasets, graphfile="cocotb_plot.png")
+    .. automethod:: get_sample_data(nodes, num, delay_ns)
+    .. automethod:: plot_data(datasets, graphfile)
 
 
 .. autoclass:: Dataset

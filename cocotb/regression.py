@@ -491,7 +491,6 @@ class TestFactory(object):
             raise TypeError("TestFactory requires a cocotb coroutine")
         self.test_function = test_function
         self.name = self.test_function._func.__name__
-        self.log = SimLog("cocotb.regression")
         self.args = args
         self.kwargs_constant = kwargs
         self.kwargs = {}

@@ -121,6 +121,9 @@ Example testbench for snippet of code from `comp.lang.verilog <https://github.co
 Mixed-signal (analog/digital)
 =============================
 
+The following examples also use an HDL part in the testbench in addition to the cocotb part -
+other than the examples shown so far.
+
 .. toctree::
    rescap
    regulator
