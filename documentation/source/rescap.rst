@@ -1,5 +1,6 @@
+*******************************
 The cocotb ``rescap`` Testbench
-===============================
+*******************************
 
 .. versionadded:: 1.3
 
@@ -7,13 +8,13 @@ This is the testbench :mod:`test_rescap` for the design ``rescap`` showing
 how cocotb can be used in an analog-mixed signal (AMS) simulation.
 
 Overview Schematic
-------------------
+==================
 
 .. image:: rescap_schematic.png
 
 
 The Design
-----------
+==========
 
 The design consists of a resistor and capacitor model (both written in Verilog-AMS) connected in series in a SystemVerilog module, as shown here:
 
@@ -32,12 +33,12 @@ The code of the design is:
 
 
 The Testbench
--------------
+=============
  
 The testbench consists of both an HDL part and a Python/cocotb part.
 
 The HDL part of the Testbench
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------
 
 The testbench HDL part is written in SystemVerilog and instantiates the design described above as ``i_rescap``.
 It also contains a probe module for analog values as instance ``i_analog_probe`` —
@@ -63,19 +64,41 @@ Here is the capture code for ``voltage`` with the "user-interface" highlighted:
 .. note:: This analog probe module is currently only implemented for the Cadence Incisive and Xcelium simulators.
             
 The cocotb part of the Testbench
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
+
+``test_rescap_minimalist``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is a very minimalistic testcase.
+To run it, do:
+
+.. code-block:: bash
+
+    $> make SIM=xcelium TOPLEVEL=tb_rescap MODULE=test_rescap_minimalist
+
+
+The testcase supplies ``vdd`` and measures three pairs of voltage and current at the ``p`` terminal of the capacitor,
+spaced 50 ns apart.
+
+``test_rescap``
+^^^^^^^^^^^^^^^
+
+This is a more advanced testcase.
+To run it, do:
+
+.. code-block:: bash
+
+    $> make SIM=xcelium TOPLEVEL=tb_rescap MODULE=test_rescap
+
 
 The cocotb part of the testbench provides functions to:
 
 * do the sampling of voltage and current of a given node (:meth:`~test_rescap.ResCap_TB.get_sample_data()`),
 * plot the sampled data to a file (:meth:`~test_rescap.ResCap_TB.plot_data()`).
 
- 
-FIXME: describe test_rescap_minimalist.py
-
-The testcase supplies first a positive voltage to the circuit, followed by a negative voltage,
+The testcase supplies first a positive voltage to the circuit at ``vdd``, followed by a negative voltage,
 thus charging the capacitor in opposite directions.
-The following image shows the charge curve.
+The following graph shows the charge curve.
 The sampled voltages and currents continually switch between the node where the supply is (``tb_rescap.i_rescap.vdd``),
 and the output voltage ``tb_rescap.i_rescap.vout``.
 There is no current flowing out of this output voltage terminal, so this current measurement is always zero.
@@ -84,10 +107,10 @@ There is no current flowing out of this output voltage terminal, so this current
 
 
 Reference Documentation
------------------------
+=======================
 
 cocotb Testbench
-~~~~~~~~~~~~~~~~
+----------------
 
 .. currentmodule:: test_rescap
 

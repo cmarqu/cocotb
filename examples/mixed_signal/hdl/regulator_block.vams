@@ -19,7 +19,7 @@ module regulator_block(vdd, trim, vout, vss);
   end
   
   analog begin
-    // FIXME: must limit voltage at vdd/vss
+    // TODO: limit voltage to vdd/vss
     V(vout, vss) <+ transition(vout_abs + trim_volt, 0, 20p);
   end
   

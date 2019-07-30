@@ -110,7 +110,7 @@ def run_test(tb_hdl):
 
     tb_py.tb_hdl.vdd_val <= 5.55
     tb_py.tb_hdl.vss_val <= 0.0
-    tb_py.tb_hdl._log.info("Setting vdd={} V".format(tb_py.tb_hdl.vdd_val.value))
+    tb_py.tb_hdl._log.info("Setting vdd={} V".format(tb_py.tb_hdl.vdd_val.value))  # FIXME: prints the old value!
 
     data = yield tb_py.get_sample_data(steps=80, delay_ns=5, nodes=nodes_to_probe)
     probedata.extend(data)

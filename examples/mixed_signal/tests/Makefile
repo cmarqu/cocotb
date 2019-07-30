@@ -29,7 +29,7 @@ VERILOG_SOURCES += $(WPWD)/../hdl/regulator_block.vams
 ifeq ($(SIM),$(filter $(SIM),ius xcelium))
     VERILOG_SOURCES += $(WPWD)/../hdl/analog_probe_cadence.sv
     ifeq ($(TOPLEVEL_LANG),verilog)
-        VERILOG_SOURCES += $(WPWD)/../hdl/nettypes_pkg.sv
+        VERILOG_SOURCES += $(WPWD)/../hdl/nettypes_pkg_cadence.sv
         VERILOG_SOURCES += $(WPWD)/../hdl/rescap.sv
         VERILOG_SOURCES += $(WPWD)/../hdl/regulator.sv
         VERILOG_SOURCES += $(WPWD)/../hdl/tb_rescap.sv
@@ -44,8 +44,11 @@ ifeq ($(SIM),$(filter $(SIM),ius xcelium))
 else ifeq ($(SIM),vcs)
     VERILOG_SOURCES += $(WPWD)/../hdl/analog_probe_synopsys.sv
     ifeq ($(TOPLEVEL_LANG),verilog)
+        VERILOG_SOURCES += $(WPWD)/../hdl/nettypes_pkg_synopsys.sv
         VERILOG_SOURCES += $(WPWD)/../hdl/rescap.sv
         VERILOG_SOURCES += $(WPWD)/../hdl/regulator.sv
+        VERILOG_SOURCES += $(WPWD)/../hdl/tb_rescap.sv
+        VERILOG_SOURCES += $(WPWD)/../hdl/tb_regulator.sv
     else ifeq ($(TOPLEVEL_LANG),vhdl)
         $(error "VHDL toplevel not yet implemented")
         VHDL_SOURCES += $(WPWD)/../hdl/rescap.vhdl

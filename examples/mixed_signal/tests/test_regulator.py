@@ -19,16 +19,16 @@ class Regulator_TB(object):
     """Class for collecting testbench objects.
 
     Args:
-        dut: The toplevel of the design-under-test.
+        tb_hdl: The toplevel of the design-under-test.
             In this mixed cocotb/HDL testbench environment, it is the HDL testbench.
         settling_time_ns (int): Time in nanoseconds to wait before sample is taken.
     """
 
-    def __init__(self, dut, settling_time_ns=1):
-        self.dut = dut
+    def __init__(self, tb_hdl, settling_time_ns=1):
+        self.tb_hdl = tb_hdl
         self.settling_time_ns = settling_time_ns
         self.analog_probe = (
-            dut.i_analog_probe
+            tb_hdl.i_analog_probe
         )  #: The instance name of the analog probe module.
         self._bittogglestream = itertools.cycle(
             [0, 1]
@@ -40,7 +40,7 @@ class Regulator_TB(object):
         current = self.analog_probe.current.value
         return Dataset(
             time=get_sim_time(units="ns"),
-            trim=self.dut.trim_val.value.signed_integer,
+            trim=self.tb_hdl.trim_val.value.signed_integer,
             voltage=voltage,
             current=current,
         )
@@ -49,14 +49,14 @@ class Regulator_TB(object):
     def _get_single_sample(self, node):
         """Measure a single voltage/current pair on *node*."""
         toggle = next(self._bittogglestream)
-        self.dut.i_analog_probe.node_to_probe <= node
+        self.tb_hdl.i_analog_probe.node_to_probe <= node
         self.analog_probe.probe_voltage_toggle <= toggle
         self.analog_probe.probe_current_toggle <= toggle
         yield Timer(5, units="ps")  # NOTE: needs some time for some reason
         dataset = self.probe_values()
-        self.dut._log.debug(
+        self.tb_hdl._log.debug(
             "trim value={}: {}={} V, {} A".format(
-                self.dut.trim_val.value.signed_integer,
+                self.tb_hdl.trim_val.value.signed_integer,
                 self.analog_probe.node_to_probe,
                 dataset.voltage,
                 dataset.current,
@@ -115,14 +115,14 @@ class Regulator_TB(object):
         sample = yield self.get_sample_data(probed_node)
         volt_max = sample[0].voltage
         if target_volt > volt_max:
-            self.dut._log.debug(
+            self.tb_hdl._log.debug(
                 "target_volt={} > volt_max={}, returning minimum trim value {}".format(
                     target_volt, volt_max, trim_val_max
                 )
             )
             return trim_val_max
         if target_volt < volt_min:
-            self.dut._log.debug(
+            self.tb_hdl._log.debug(
                 "target_volt={} < volt_min={}, returning maximum trim value {}".format(
                     target_volt, volt_min, trim_val_min
                 )
@@ -163,62 +163,62 @@ class Regulator_TB(object):
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
         fig.set_size_inches(14, 8)
 
-        self.dut._log.info("Writing file {}".format(graphfile))
+        self.tb_hdl._log.info("Writing file {}".format(graphfile))
         fig.savefig(graphfile)
 
 
 @cocotb.coroutine
-def run_test(dut):
+def run_test(tb_hdl):
     """Run test for mixed signal simulation."""
 
-    tb = Regulator_TB(dut)
+    tb_py = Regulator_TB(tb_hdl)
 
     node = "tb_regulator.i_regulator.i_regulator_block.vout"
 
     probedata = []
 
-    dummy = yield tb.get_sample_data(
+    dummy = yield tb_py.get_sample_data(
         node
     )  # NOTE: dummy read apparently needed because of $cds_get_analog_value
 
-    tb.dut._log.setLevel(logging.DEBUG)
+    tb_py.tb_hdl._log.setLevel(logging.DEBUG)
 
     # show manual trimming
-    tb.dut.vdd_val <= 7.77
-    tb.dut.vss_val <= 0.0
+    tb_py.tb_hdl.vdd_val <= 7.77
+    tb_py.tb_hdl.vss_val <= 0.0
 
-    tb.dut.trim_val <= 0
-    yield Timer(tb.settling_time_ns, units="ns")
-    tb.dut._log.info(
+    tb_py.tb_hdl.trim_val <= 0
+    yield Timer(tb_py.settling_time_ns, units="ns")
+    tb_py.tb_hdl._log.info(
         "trim_val={}, vdd={} V".format(
-            tb.dut.trim_val.value.signed_integer, tb.dut.vdd_val.value
+            tb_py.tb_hdl.trim_val.value.signed_integer, tb_py.tb_hdl.vdd_val.value
         )
     )
 
-    datasets = yield tb.get_sample_data(node)
+    datasets = yield tb_py.get_sample_data(node)
     probedata.extend(datasets)
 
-    tb.dut.trim_val <= 3
-    yield Timer(tb.settling_time_ns, units="ns")
-    tb.dut._log.info(
+    tb_py.tb_hdl.trim_val <= 3
+    yield Timer(tb_py.settling_time_ns, units="ns")
+    tb_py.tb_hdl._log.info(
         "trim_val={}, vdd={} V".format(
-            tb.dut.trim_val.value.signed_integer, tb.dut.vdd_val.value
+            tb_py.tb_hdl.trim_val.value.signed_integer, tb_py.tb_hdl.vdd_val.value
         )
     )
-    datasets = yield tb.get_sample_data(node)
+    datasets = yield tb_py.get_sample_data(node)
     probedata.extend(datasets)
 
-    tb.dut.trim_val <= -5
-    yield Timer(tb.settling_time_ns, units="ns")
-    tb.dut._log.info(
+    tb_py.tb_hdl.trim_val <= -5
+    yield Timer(tb_py.settling_time_ns, units="ns")
+    tb_py.tb_hdl._log.info(
         "trim_val={}, vdd={} V".format(
-            tb.dut.trim_val.value.signed_integer, tb.dut.vdd_val.value
+            tb_py.tb_hdl.trim_val.value.signed_integer, tb_py.tb_hdl.vdd_val.value
         )
     )
-    datasets = yield tb.get_sample_data(node)
+    datasets = yield tb_py.get_sample_data(node)
     probedata.extend(datasets)
 
-    tb.plot_data(datasets=probedata, graphfile="regulator.png")
+    tb_py.plot_data(datasets=probedata, graphfile="regulator.png")
 
     # show automatic trimming
     target_volt = 3.013
@@ -227,13 +227,13 @@ def run_test(dut):
             target_volt
         )
     )
-    best_trim_float = yield tb.find_trim_val(
-        probed_node=node, target_volt=target_volt, trim_val_node=tb.dut.trim_val
+    best_trim_float = yield tb_py.find_trim_val(
+        probed_node=node, target_volt=target_volt, trim_val_node=tb_py.tb_hdl.trim_val
     )
     best_trim_rounded = round(best_trim_float)
-    tb.dut.trim_val <= best_trim_rounded
-    yield Timer(tb.settling_time_ns, units="ns")
-    datasets = yield tb.get_sample_data(node)
+    tb_py.tb_hdl.trim_val <= best_trim_rounded
+    yield Timer(tb_py.settling_time_ns, units="ns")
+    datasets = yield tb_py.get_sample_data(node)
     trimmed_volt = datasets[0].voltage
     print(
         "test_regulator.py: Determined best trimming value to be {} "
