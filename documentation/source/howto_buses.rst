@@ -1,80 +1,8 @@
-################
-Testbench Tools
-################
+#####
+Buses
+#####
 
-Logging
-=======
-
-Cocotb extends the Python logging library. Each DUT, monitor, driver, and
-scoreboard (as well as any other function using the coroutine decorator)
-implements its own :class:`logging` object, and each can be set to its own
-logging level. Within a DUT, each hierarchical object can also have individual
-logging levels set.
-
-When logging HDL objects, beware that ``_log`` is the preferred way to use
-logging. This helps minimize the change of name collisions with an HDL log
-component with the Python logging functionality.
-
-Log printing levels can also be set on a per-object basis.
-
-.. code-block:: python3
-
-        class EndianSwapperTB(object):
-            def __init__(self, dut, debug=False):
-                self.dut = dut
-                self.stream_in = AvalonSTDriver(dut, "stream_in", dut.clk)
-                self.stream_in_recovered = AvalonSTMonitor(
-                    dut, "stream_in", dut.clk, callback=self.model
-                )
-
-                # Set verbosity on our various interfaces
-                level = logging.DEBUG if debug else logging.WARNING
-                self.stream_in.log.setLevel(level)
-                self.stream_in_recovered.log.setLevel(level)
-                self.dut.reset_n._log.setLevel(logging.DEBUG)
-
-And when the logging is actually called
-
-.. code-block:: python3
-
-        class AvalonSTPkts(BusMonitor):
-            ...
-
-            @coroutine
-            def _monitor_recv(self):
-                ...
-                self.log.info("Received a packet of %d bytes" % len(pkt))
-
-
-        class Scoreboard(object):
-            ...
-
-            def add_interface(self):
-                ...
-                self.log.info("Created with reorder_depth %d" % reorder_depth)
-
-
-        class EndianSwapTB(object):
-            ...
-
-            @cocotb.coroutine
-            def reset():
-                self.dut._log.debug("Resetting DUT")
-
-
-will display as something like
-
-.. code-block:: bash
-
-    0.00ns INFO                   cocotb.scoreboard.endian_swapper_sv       scoreboard.py:177  in add_interface                   Created with reorder_depth 0
-    0.00ns DEBUG                  cocotb.endian_swapper_sv           .._endian_swapper.py:106  in reset                           Resetting DUT
-    160000000000000.00ns INFO     cocotb.endian_swapper_sv.stream_out           avalon.py:151  in _monitor_recv                   Received a packet of 125 bytes
-
-
-Busses
-======
-
-Busses are simply defined as collection of signals. The :class:`.Bus` class
+Buses are simply defined as collection of signals. The :class:`.Bus` class
 will automatically bundle any group of signals together that are named similar
 to ``dut.<bus_name><separator><signal_name>``. For instance,
 
@@ -85,7 +13,7 @@ to ``dut.<bus_name><separator><signal_name>``. For instance,
 
 have a bus name of ``stream_in``, a separator of ``_``, and signal names of
 ``valid`` and ``data``. A list of signal names, or a dictionary mapping attribute
-names to signal names is also passed into the :class:`.Bus` class. Busses can
+names to signal names is also passed into the :class:`.Bus` class. Buses can
 have values driven onto them, be captured (returning a dictionary), or sampled
 and stored into a similar object.
 
@@ -94,8 +22,9 @@ and stored into a similar object.
      stream_in_bus = Bus(dut, "stream_in", ["valid", "data"])  # '_' is the default separator
 
 
-Driving Busses
-==============
+*************
+Driving Buses
+*************
 
 Examples and specific bus implementation bus drivers (AMBA, Avalon, XGMII, and
 others) exist in the :class:`.Driver` class enabling a test to append
@@ -133,12 +62,13 @@ example:
             yield tb.stream_in.send(transaction)
 
 
-Monitoring Busses
-=================
+****************
+Monitoring Buses
+****************
 
 For our testbenches to actually be useful, we have to monitor some of these
-busses, and not just drive them. That's where the :class:`.Monitor` class
-comes in, with prebuilt monitors for Avalon and XGMII busses. The
+buses, and not just drive them. That's where the :class:`.Monitor` class
+comes in, with prebuilt monitors for Avalon and XGMII buses. The
 Monitor class is a base class which you are expected to derive for your
 particular purpose. You must create a :any:`_monitor_recv()` function which is
 responsible for determining 1) at what points in simulation to call the
@@ -204,31 +134,3 @@ class.
             if not self.stopped:
                 self.expected_output.append(transaction)
 
-
-Tracking testbench errors
-=========================
-
-The :class:`.Scoreboard` class is used to compare the actual outputs to
-expected outputs. Monitors are added to the scoreboard for the actual outputs,
-and the expected outputs can be either a simple list, or a function that
-provides a transaction. Here is some code from the ``dff`` example, similar to
-above with the scoreboard added.
-
-.. code-block:: python3
-
-    class DFF_TB(object):
-        def __init__(self, dut, init_val):
-            self.dut = dut
-
-            # Create input driver and output monitor
-            self.input_drv = BitDriver(dut.d, dut.c, input_gen())
-            self.output_mon = BitMonitor("output", dut.q, dut.c)
-
-            # Create a scoreboard on the outputs
-            self.expected_output = [init_val]
-            self.scoreboard = Scoreboard(dut)
-            self.scoreboard.add_interface(self.output_mon, self.expected_output)
-
-            # Reconstruct the input transactions from the pins
-            # and send them to our 'model'
-            self.input_mon = BitMonitor("input", dut.d, dut.c, callback=self.model)

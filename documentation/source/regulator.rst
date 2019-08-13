@@ -1,20 +1,22 @@
-**********************************
+##################################
 The cocotb ``regulator`` Testbench
-**********************************
+##################################
 
 .. versionadded:: 1.3
 
 This is the testbench :mod:`test_regulator` for the design ``regulator`` showing
 how cocotb can be used in an analog-mixed signal (AMS) simulation.
 
+******************
 Overview Schematic
-==================
+******************
 
 .. image:: regulator_schematic.png
 
 
+**********
 The Design
-==========
+**********
 
 The design ``i_regulator`` consists of a trimmable regulator model written in Verilog-AMS (instance name ``i_regulator_block``),
 and load resistor (instance name ``i_resistor``).
@@ -29,13 +31,14 @@ and load resistor (instance name ``i_resistor``).
    :language: systemverilog
 
 
+*************
 The Testbench
-=============
+*************
  
 The testbench consists of both an HDL part and a Python/cocotb part.
 
 The HDL part of the Testbench
------------------------------
+=============================
 
 The testbench HDL part is written in SystemVerilog and instantiates the design described above as ``i_regulator``.
 It also contains a probe module for analog values as instance ``i_analog_probe`` —
@@ -61,17 +64,17 @@ Here is the capture code for ``voltage`` with the "user-interface" highlighted:
 .. note:: This analog probe module is currently only implemented for the Cadence Incisive and Xcelium simulators.
             
 The cocotb part of the Testbench
---------------------------------
+================================
 
 ``test_regulator_minimalist``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 This is a fairly minimalistic testcase.
 To run it, do:
 
 .. code-block:: bash
 
-    $> make SIM=xcelium TOPLEVEL=tb_regulator MODULE=test_regulator_minimalist
+    make SIM=xcelium TOPLEVEL=tb_regulator MODULE=test_regulator_minimalist
 
 
 The testcase supplies the circuit with ``vdd`` and calls the trimming routine :meth:`~test_regulator.Regulator_TB.find_trim_val()`
@@ -80,14 +83,14 @@ The found trim value and the resulting regulator output voltage (which will not 
 
 
 ``test_regulator``
-^^^^^^^^^^^^^^^^^^
+------------------
 
 This is a more advanced testcase.
 To run it, do:
 
 .. code-block:: bash
 
-    $> make SIM=xcelium TOPLEVEL=tb_regulator MODULE=test_regulator
+    make SIM=xcelium TOPLEVEL=tb_regulator MODULE=test_regulator
 
 
 The testcase first sets a ``vdd`` voltage and three different trim values, saving the resulting output voltage ``vout`` for each.
@@ -99,11 +102,12 @@ The found trim value and the resulting regulator output voltage (which will not 
 .. image:: regulator.png
 
 
+***********************
 Reference Documentation
-=======================
+***********************
 
 cocotb Testbench
-----------------
+================
 
 .. currentmodule:: test_regulator
 
