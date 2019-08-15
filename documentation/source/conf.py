@@ -41,7 +41,6 @@ extensions = [
     'sphinx.ext.intersphinx',
     'cairosvgconverter',
     'breathe',
-    'sphinxcontrib_trio',
     'sphinx_issues',
     ]
 
