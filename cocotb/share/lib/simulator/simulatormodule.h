@@ -53,6 +53,31 @@ struct callback_data {
 
 static PyObject *log_msg(PyObject *self, PyObject *args);
 
+<<<<<<< HEAD
+=======
+// Raise an exception on failure
+// Return None if for example get bin_string on enum?
+static PyObject *get_signal_val_long(PyObject *self, PyObject *args);
+static PyObject *get_signal_val_real(PyObject *self, PyObject *args);
+static PyObject *get_signal_val_str(PyObject *self, PyObject *args);
+static PyObject *get_signal_val_binstr(PyObject *self, PyObject *args);
+static PyObject *set_signal_val_long(PyObject *self, PyObject *args);
+static PyObject *set_signal_val_real(PyObject *self, PyObject *args);
+static PyObject *set_signal_val_str(PyObject *self, PyObject *args);
+static PyObject *get_definition_name(PyObject *self, PyObject *args);
+static PyObject *get_definition_file(PyObject *self, PyObject *args);
+static PyObject *get_handle_by_name(PyObject *self, PyObject *args);
+static PyObject *get_handle_by_index(PyObject *self, PyObject *args);
+static PyObject *get_root_handle(PyObject *self, PyObject *args);
+static PyObject *get_name_string(PyObject *self, PyObject *args);
+static PyObject *get_type(PyObject *self, PyObject *args);
+static PyObject *get_const(PyObject *self, PyObject *args);
+static PyObject *get_is_port(PyObject *self, PyObject *args);
+static PyObject *get_port_direction_string(PyObject *self, PyObject *args);
+static PyObject *get_type_string(PyObject *self, PyObject *args);
+static PyObject *get_num_elems(PyObject *self, PyObject *args);
+static PyObject *get_range(PyObject *self, PyObject *args);
+>>>>>>> Add support for _is_port, _port_direction_str.
 static PyObject *register_timed_callback(PyObject *self, PyObject *args);
 static PyObject *register_value_change_callback(PyObject *self, PyObject *args);
 static PyObject *register_readonly_callback(PyObject *self, PyObject *args);
@@ -70,6 +95,8 @@ static PyObject *log_level(PyObject *self, PyObject *args);
 static PyMethodDef SimulatorMethods[] = {
     {"log_msg", log_msg, METH_VARARGS, "Log a message"},
     {"get_root_handle", get_root_handle, METH_VARARGS, "Get the root handle"},
+    {"get_is_port", get_is_port, METH_VARARGS, "Get a flag indicating whether the object is a port"},
+    {"get_port_direction_string", get_port_direction_string, METH_VARARGS, "Get the direction of a port as a string"},
     {"register_timed_callback", register_timed_callback, METH_VARARGS, "Register a timed callback"},
     {"register_value_change_callback", register_value_change_callback, METH_VARARGS, "Register a signal change callback"},
     {"register_readonly_callback", register_readonly_callback, METH_VARARGS, "Register a callback for the read-only section"},
