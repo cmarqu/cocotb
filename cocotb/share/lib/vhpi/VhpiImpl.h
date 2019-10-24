@@ -46,7 +46,7 @@
 static inline int __check_vhpi_error(const char *file, const char *func, long line)
 {
     int err_occurred = 0;
-#if VHPI_CHECKING
+#if defined(VHPI_CHECKING) && !defined(VCS)
     vhpiErrorInfoT info;
     int loglevel;
     err_occurred = vhpi_check_error(&info);

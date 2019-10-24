@@ -884,7 +884,11 @@ int VhpiImpl::deregister_callback(GpiCbHdl *gpi_hdl)
 void VhpiImpl::sim_end()
 {
     sim_finish_cb->set_call_state(GPI_DELETE);
+#ifdef VCS
+    vhpi_sim_control(vhpiFinish);
+#else
     vhpi_control(vhpiFinish);
+#endif
     check_vhpi_error();
 }
 

@@ -1,0 +1,134 @@
+###############################################################################
+# Copyright (c) 2013 Potential Ventures Ltd
+# Copyright (c) 2013 SolarFlare Communications Inc
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Potential Ventures Ltd,
+#       SolarFlare Communications Inc nor the
+#       names of its contributors may be used to endorse or promote products
+#       derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL POTENTIAL VENTURES LTD BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+###############################################################################
+
+# http://www.vlsiip.com/vcs/
+# http://salinasv.blogspot.com/2011/05/simulating-mixed-language-hdl-using-vcs.html
+# https://github.com/benreynwar/vunit/blob/vcsmx_interface/vunit/vcsmx_interface.py
+# https://github.com/benreynwar/vunit/blob/vcsmx_interface/vunit/vcsmx_setup_file.py
+# https://github.com/VUnit/vunit/issues/134
+
+CMD_BIN := vcs
+
+ifdef VCS_BIN_DIR
+    CMD := $(shell which $(VCS_BIN_DIR)/$(CMD_BIN) 2>/dev/null)
+else
+    # auto-detect bin dir from system path
+    CMD := $(shell which $(CMD_BIN) 2>/dev/null)
+endif
+
+ifeq (, $(CMD))
+    $(error "Unable to locate command >$(CMD_BIN)<")
+else
+	VCS_BIN_DIR := $(shell dirname $(CMD))
+    export VCS_BIN_DIR
+endif
+
+ifeq ($(ARCH),x86_64)
+    # export VCS_TARGET_ARCH linux64
+    EXTRA_ARGS += -full64
+endif
+
+ifeq ($(GUI),1)
+    SIM_ARGS += -gui
+endif
+
+ifeq ($(DEBUG),1)
+    EXTRA_ARGS += -debug
+    #EXTRA_ARGS += -debug_access+r+w+nomemcbk -debug_region+cell
+    #EXTRA_ARGS += -debug_acc+pp+f+dmptf -debug_region+cell+encrypt
+endif
+
+# TODO:
+# investigate +vpi+1 option which reduces memory requirements
+
+# Can't do this using an argument, we have to create a PLI table file
+# enabling write access to the design
+$(SIM_BUILD)/pli.tab:
+	echo "acc+=rw,wn:*" > $@
+
+ifeq ($(TOPLEVEL_LANG),verilog)
+    GPI_ARGS = -load libvpi.so
+    HDL_SOURCES = $(VERILOG_SOURCES)
+    ROOT_LEVEL = $(TOPLEVEL)
+    EXTRA_ARGS += +acc+1 
+    EXTRA_ARGS += -sverilog
+    EXTRA_ARGS += +vpi
+    EXTRA_ARGS += -top $(TOPLEVEL)
+    ifneq ($(VHDL_SOURCES),)
+        HDL_SOURCES += $(VHDL_SOURCES)
+        #GPI_EXTRA = cocotbvhpi 
+    endif
+else ifeq ($(TOPLEVEL_LANG),vhdl)
+    #GPI_EXTRA = cocotbvhpi
+    RTL_LIBRARY ?= $(TOPLEVEL)
+    EXTRA_ARGS += -work $(RTL_LIBRARY)
+    HDL_SOURCES = $(VHDL_SOURCES)
+    ifneq ($(VERILOG_SOURCES),)
+        HDL_SOURCES += $(VERILOG_SOURCES)
+    endif
+else
+    $(error "A valid value (verilog or vhdl) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
+endif
+
+
+$(SIM_BUILD)/synopsys_sim.setup:
+	@mkdir -p $(SIM_BUILD)/work
+	@mkdir -p $(SIM_BUILD)/$(RTL_LIBRARY)
+	-@rm -f $@
+	@echo "DISABLE_VHPI_ERRORS = FALSE"       >> $@
+	@echo "WORK > $(RTL_LIBRARY)"             >> $@
+	@echo "$(RTL_LIBRARY) : ./$(RTL_LIBRARY)" >> $@
+
+## Compilation phase, Verilog
+#$(SIM_BUILD)/simv: $(SIM_BUILD) $(VERILOG_SOURCES) $(SIM_BUILD)/pli.tab $(COCOTB_LIBS) $(COCOTB_VPI_LIB) $(CUSTOM_COMPILE_DEPS)
+#	cd $(SIM_BUILD) && \
+#    LD_LIBRARY_PATH=$(LIB_DIR):$(LD_LIBRARY_PATH) TOPLEVEL=$(TOPLEVEL) \
+#    $(CMD) $(PLUSARGS) -P pli.tab +define+COCOTB_SIM=1 $(EXTRA_ARGS) $(GPI_ARGS) $(COMPILE_ARGS) $(VERILOG_SOURCES)
+
+# Compilation phase, VHDL
+$(SIM_BUILD)/simv: $(SIM_BUILD) $(SIM_BUILD)/synopsys_sim.setup $(VHDL_SOURCES) $(COCOTB_LIBS) $(COCOTB_VPI_LIB) $(COCOTB_VHPI_LIB) $(CUSTOM_COMPILE_DEPS)
+	cd $(SIM_BUILD) && \
+		LD_LIBRARY_PATH=$(LIB_DIR):$(LD_LIBRARY_PATH) TOPLEVEL=$(TOPLEVEL) \
+		vhdlan -nc -verbose $(PLUSARGS) $(EXTRA_ARGS) $(GPI_ARGS) $(COMPILE_ARGS) $(VHDL_SOURCES)
+	cd $(SIM_BUILD) && \
+		$(CMD) -full64 -V -notice -debug_access+all $(TOPLEVEL) 2>&1
+
+# Execution phase
+$(COCOTB_RESULTS_FILE): $(SIM_BUILD)/simv $(PYTHON_FILES) $(CUSTOM_SIM_DEPS)
+	-PYTHONPATH=$(LIB_DIR):$(PWD):$(PYTHONPATH) LD_LIBRARY_PATH=$(LIB_DIR):$(LD_LIBRARY_PATH) MODULE=$(MODULE) TESTCASE=$(TESTCASE) TOPLEVEL=$(TOPLEVEL) COCOTB_SIM=1 \
+		TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
+        $(SIM_BUILD)/simv -nc $(SIM_ARGS) -ucli -diag vhpi -vhpi cocotbvhpi:vhpi_startup_routines_bootstrap:cocotb 2>&1 | tee $(SIM_BUILD)/sim.log
+
+.PHONY: clean
+clean::
+	-@rm -rf $(SIM_BUILD)
+	-@rm -rf simv.daidir
+	-@rm -rf cm.log
+	-@rm -rf $(COCOTB_RESULTS_FILE)
+	-@rm -rf ucli.key

@@ -49,6 +49,11 @@ ifeq ($(SIM_DEFINE),XCELIUM)
 SIM_DEFINE = IUS
 endif
 
+# Use a common define for VCS and VCSMX
+ifeq ($(SIM_DEFINE),VCSMX)
+SIM_DEFINE = VCS
+endif
+
 # Add Simulator Define for compilation
 GCC_ARGS+= -D$(SIM_DEFINE)
 GXX_ARGS+= -D$(SIM_DEFINE)
