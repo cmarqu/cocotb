@@ -216,11 +216,11 @@ class BusDriver(Driver):
         * an entity
 
         Args:
-            entity (SimHandle): A handle to the simulator entity.
+            entity (:any:`SimHandle`): A handle to the simulator entity.
             name (str or None): Name of this bus. ``None`` for a nameless bus, e.g.
                 bus-signals in an interface or a ``modport``.
                 (untested on ``struct``/``record``, but could work here as well).
-            clock (SimHandle): A handle to the clock associated with this bus.
+            clock (:any:`SimHandle`): A handle to the clock associated with this bus.
             array_idx (int or None, optional): Optional index when signal is an array.
     """
     
@@ -291,9 +291,9 @@ class ValidatedBusDriver(BusDriver):
     to control which cycles are valid.
 
     Args:
-        entity (SimHandle): A handle to the simulator entity.
+        entity (:any:`SimHandle`): A handle to the simulator entity.
         name (str): Name of this bus.
-        clock (SimHandle): A handle to the clock associated with this bus.
+        clock (:any:`SimHandle`): A handle to the clock associated with this bus.
         valid_generator (generator, optional): a generator that yields tuples of
             ``(valid, invalid)`` cycles to insert.
     """
