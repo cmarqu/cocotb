@@ -37,6 +37,20 @@ import warnings
 resolve_x_to = os.getenv('COCOTB_RESOLVE_X', "VALUE_ERROR")
 
 def resolve(string):
+    """Resolve HDL values given as *string* to binary string.
+
+    An `X` value is resolved based on the setting of the ``COCOTB_RESOLVE_X``
+    environment variable.
+
+    Args:
+        string (str): The value to resolve.
+
+    Returns:
+        str: The resolved binary string.
+
+    Raises:
+        :exc:`ValueError`: If given *string*  is in :any:`_resolve_to_error` list.
+    """
     for char in BinaryValue._resolve_to_0:
         string = string.replace(char, "0")
     for char in BinaryValue._resolve_to_1:
@@ -56,7 +70,7 @@ def resolve(string):
 
 def _clog2(val):
     if val < 0:
-        raise ValueError("_clog2 can't take a negative")
+        raise ValueError("`_clog2()` can't work on negative value (got {})".format(val))
     exp = 0
     while True:
         if (1 << exp) >= val:
@@ -79,9 +93,9 @@ class BinaryValue(object):
         - :attr:`BinaryValue.signed_integer` is a signed integer
         - :attr:`BinaryValue.binstr` is a string of ``01xXzZ``
         - :attr:`BinaryValue.buff` is a binary buffer of bytes
-        - :attr:`BinaryValue.value` is an integer **deprecated**
+        - :attr:`BinaryValue.value` is an integer (deprecated)
 
-    For example:
+    Examples:
 
     >>> vec = BinaryValue()
     >>> vec.integer = 42
@@ -92,8 +106,11 @@ class BinaryValue(object):
 
     """
     _resolve_to_0     = "-lL"  # noqa
+    """Values that will be resolved to a ``0``."""
     _resolve_to_1     = "hH"  # noqa
-    _resolve_to_error = "xXzZuUwW"  # Resolve to a ValueError() since these usually mean something is wrong
+    """Values that will be resolved to a ``1``."""  # noqa
+    _resolve_to_error = "xXzZuUwW"
+    """Values that will be resolved to a :exc:`ValueError` - these usually mean something is wrong."""
     _permitted_chars  = _resolve_to_0 +_resolve_to_1 + _resolve_to_error + "01"  # noqa
 
     def __init__(self, value=None, n_bits=None, bigEndian=True,
@@ -144,16 +161,22 @@ class BinaryValue(object):
             self.assign(value)
 
     def assign(self, value):
-        """Decides how best to assign the value to the vector.
+        """Decides how best to assign the *value* to the vector.
 
         We possibly try to be a bit too clever here by first of
-        all trying to assign the raw string as a :attr:`BinaryValue.binstr`,
+        all trying to assign the raw string as a :attr:`~BinaryValue.binstr`,
         however if the string contains any characters that aren't
         ``0``, ``1``, ``X`` or ``Z``
         then we interpret the string as a binary buffer.
 
         Args:
             value (str or int or long): The value to assign.
+
+        Returns:
+            str: The assigned binary string.
+
+        Raises:
+            :exc:`ValueError`: If attempting to assign a negative number to an unsigned BinaryValue.
         """
         if isinstance(value, _py_compat.integer_types):
             self.value = value
@@ -222,6 +245,17 @@ class BinaryValue(object):
         return inverted
 
     def _adjust_unsigned(self, x):
+        """Pad or truncate *x* to the correct length.
+
+        >>> vec = BinaryValue(16, bigEndian=False, n_bits=4)
+        WARNING: _adjust_unsigned() truncating MSBs of value to match requested number of bits (5 -> 4)
+        >>> print(vec.integer)
+        1
+        >>> vec = BinaryValue(16, bigEndian=True, n_bits=4)
+        WARNING: _adjust_unsigned() truncating MSBs of value to match requested number of bits (5 -> 4)
+        >>> print(vec.integer)
+        0
+        """
         if self._n_bits is None:
             return x
         l = len(x)
@@ -231,7 +265,7 @@ class BinaryValue(object):
             else:
                 rv = '0' * (self._n_bits - l) + x
         elif l > self._n_bits:
-            print("WARNING: truncating value to match requested number of bits "
+            print("WARNING: _adjust_unsigned() truncating MSBs of value to match requested number of bits "
                   "(%d -> %d)" % (l, self._n_bits))
             if self.big_endian:
                 rv = x[l - self._n_bits:]
@@ -240,7 +274,7 @@ class BinaryValue(object):
         return rv
 
     def _adjust_signed_mag(self, x):
-        """Pad/truncate the bit string to the correct length."""
+        """Pad or truncate the bit string to the correct length."""
         if self._n_bits is None:
             return x
         l = len(x)
@@ -252,7 +286,7 @@ class BinaryValue(object):
                 rv = '0' * (self._n_bits - 1 - l) + x[1:]
                 rv = x[0] + rv
         elif l > self._n_bits:
-            print("WARNING: truncating value to match requested number of bits "
+            print("WARNING: _adjust_signed_mag() truncating value to match requested number of bits "
                   "(%d -> %d)" % (l, self._n_bits))
             if self.big_endian:
                 rv = x[l - self._n_bits:]
@@ -272,7 +306,7 @@ class BinaryValue(object):
             else:
                 rv = x[0] * (self._n_bits - l) + x
         elif l > self._n_bits:
-            print("WARNING: truncating value to match requested number of bits "
+            print("WARNING: _adjust_twos_comp() truncating value to match requested number of bits "
                   "(%d -> %d)" % (l, self._n_bits))
             if self.big_endian:
                 rv = x[l - self._n_bits:]
@@ -297,24 +331,27 @@ class BinaryValue(object):
             return -1 * (1 + (int(~ival) & (signbit - 1)))
 
     def set_value(self, integer):
+        """Set value of the underlying vector to *integer* (based on :attr:`BinaryRepresentation`)."""
         self._str = self._convert_to[self.binaryRepresentation](integer)
 
     @property
     def is_resolvable(self):
-        """Does the value contain any ``X``'s?  Inquiring minds want to know."""
+        """Check that the value does not contain any unresolveable bits (from the :any:`_resolve_to_error` list)."""
         return not any(char in self._str for char in BinaryValue._resolve_to_error)
 
     value = property(get_value, set_value, None,
-                     "Integer access to the value. **deprecated**")
+                     "Access the integer representation of the underlying vector. **Deprecated**, use :attr:`BinaryValue.integer` instead.")
     integer = property(get_value, set_value, None,
-                       "The integer representation of the underlying vector.")
+                       "Access the integer representation of the underlying vector (calling :func:`get_value` for reading and :func:`set_value` for writing).")
     signed_integer = property(get_value_signed, set_value, None,
-                              "The signed integer representation of the underlying vector.")
+                              "Access the signed integer representation of the underlying vector (calling :func:`get_value_signed` for reading and :func:`set_value` for writing).")
 
     def get_buff(self):
         """Attribute :attr:`buff` represents the value as a binary string buffer.
 
-        >>> "0100000100101111".buff == "\x41\x2F"
+        Example:
+
+        >>> BinaryValue("0100000100101111").buff == "\x41\x2F"
         True
         """
         bits = resolve(self._str)
@@ -334,21 +371,35 @@ class BinaryValue(object):
         return buff
 
     def get_hex_buff(self):
+        """Return the binary string buffer in hexadecimal format."""
         bstr = self.get_buff()
         hstr = '%0*X' % ((len(bstr) + 3) // 4, int(bstr, 2))
         return hstr
 
     def set_buff(self, buff):
+        """Set the value of the binary string buffer to *buff*."""
         self._str = ""
         for char in buff:
             if self.big_endian:
                 self._str += "{0:08b}".format(ord(char))
             else:
                 self._str = "{0:08b}".format(ord(char)) + self._str
-        self._adjust()
+        self._adjust_binstr()
 
-    def _adjust(self):
-        """Pad/truncate the bit string to the correct length."""
+    def _adjust_binstr(self):
+        """Pad or truncate the binary string to the correct length.
+
+        Examples:
+
+        >>> vec = BinaryValue("10000", bigEndian=False, n_bits=4)
+        WARNING: _adjust_binstr() truncating left side of value to match requested number of bits (5 -> 4)
+        >>> print(vec.binstr)
+        0000
+        >>> vec = BinaryValue("00001", bigEndian=False, n_bits=4)
+        WARNING: _adjust_binstr() truncating left side of value to match requested number of bits (5 -> 4)
+        >>> print(vec.binstr)
+        0001
+        """
         if self._n_bits is None:
             return
         l = len(self._str)
@@ -358,37 +409,39 @@ class BinaryValue(object):
             else:
                 self._str = "0" * (self._n_bits - l) + self._str
         elif l > self._n_bits:
-            print("WARNING: truncating value to match requested number of bits "
+            print("WARNING: _adjust_binstr() truncating left side of value to match requested number of bits "
                   "(%d -> %d)" % (l, self._n_bits))
             self._str = self._str[l - self._n_bits:]
 
     buff = property(get_buff, set_buff, None,
-                    "Access to the value as a buffer.")
+                    "Access to the value as a buffer (calling :func:`get_buff` for reading and :func:`set_buff` for writing).")
 
     def get_binstr(self):
         """Attribute :attr:`binstr` is the binary representation stored as
-        a string of ``1`` and ``0``."""
+        a string of ``0`` and ``1``."""
         return self._str
 
     def set_binstr(self, string):
+        """Set binary string to *string*."""
         for char in string:
             if char not in BinaryValue._permitted_chars:
                 raise ValueError("Attempting to assign character %s to a %s" %
                                  (char, self.__class__.__name__))
         self._str = string
-        self._adjust()
+        self._adjust_binstr()
 
     binstr = property(get_binstr, set_binstr, None,
-                      "Access to the binary string.")
+                      "Access to the binary string (calling :func:`get_binstr` for reading and :func:`set_binstr` for writing).")
 
     def _get_n_bits(self):
         """The number of bits of the binary value."""
         return self._n_bits
 
     n_bits = property(_get_n_bits, None, None,
-                      "Access to the number of bits of the binary value.")
+                      "Return the number of bits of the binary value.")
 
     def hex(self):
+        """Return value in hexadecimal format."""
         try:
             return hex(self.get_value())
         except Exception:

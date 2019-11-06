@@ -34,6 +34,9 @@ Writing and Generating tests
 Interacting with the Simulator
 ==============================
 
+Binary Values
+-------------
+
 .. currentmodule:: cocotb.binary
 
 .. autoclass:: BinaryRepresentation
@@ -44,11 +47,24 @@ Interacting with the Simulator
     :members:
     :member-order: bysource
 
+.. autoattribute:: cocotb.binary.BinaryValue._resolve_to_error
+.. autoattribute:: cocotb.binary.BinaryValue._resolve_to_0
+.. autoattribute:: cocotb.binary.BinaryValue._resolve_to_1
+
+Buses
+-----
+
 .. autoclass:: cocotb.bus.Bus
     :members:
     :member-order: bysource
 
+Clocks
+------
+
 .. autoclass:: cocotb.clock.Clock
+
+Parallel Execution
+------------------
 
 .. autofunction:: cocotb.fork
 
