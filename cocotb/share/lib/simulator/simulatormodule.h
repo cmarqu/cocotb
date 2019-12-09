@@ -61,9 +61,11 @@ static PyObject *get_signal_val_long(PyObject *self, PyObject *args);
 static PyObject *get_signal_val_real(PyObject *self, PyObject *args);
 static PyObject *get_signal_val_str(PyObject *self, PyObject *args);
 static PyObject *get_signal_val_binstr(PyObject *self, PyObject *args);
+static PyObject *get_signal_val_phys(PyObject *self, PyObject *args);
 static PyObject *set_signal_val_long(PyObject *self, PyObject *args);
 static PyObject *set_signal_val_real(PyObject *self, PyObject *args);
 static PyObject *set_signal_val_str(PyObject *self, PyObject *args);
+static PyObject *set_signal_val_phys(PyObject *self, PyObject *args);
 static PyObject *get_definition_name(PyObject *self, PyObject *args);
 static PyObject *get_definition_file(PyObject *self, PyObject *args);
 static PyObject *get_handle_by_name(PyObject *self, PyObject *args);
@@ -72,6 +74,8 @@ static PyObject *get_root_handle(PyObject *self, PyObject *args);
 static PyObject *get_name_string(PyObject *self, PyObject *args);
 static PyObject *get_type(PyObject *self, PyObject *args);
 static PyObject *get_const(PyObject *self, PyObject *args);
+static PyObject *get_is_port(PyObject *self, PyObject *args);
+static PyObject *get_port_direction_string(PyObject *self, PyObject *args);
 static PyObject *get_type_string(PyObject *self, PyObject *args);
 static PyObject *get_num_elems(PyObject *self, PyObject *args);
 static PyObject *get_range(PyObject *self, PyObject *args);
@@ -97,9 +101,11 @@ static PyMethodDef SimulatorMethods[] = {
     {"get_signal_val_str", get_signal_val_str, METH_VARARGS, "Get the value of a signal as an ASCII string"},
     {"get_signal_val_binstr", get_signal_val_binstr, METH_VARARGS, "Get the value of a signal as a binary string"},
     {"get_signal_val_real", get_signal_val_real, METH_VARARGS, "Get the value of a signal as a double precision float"},
+    {"get_signal_val_phys", get_signal_val_phys, METH_VARARGS, "Get the value of a signal as a physical type (value and unit)"},
     {"set_signal_val_long", set_signal_val_long, METH_VARARGS, "Set the value of a signal using a long"},
     {"set_signal_val_str", set_signal_val_str, METH_VARARGS, "Set the value of a signal using a binary string"},
     {"set_signal_val_real", set_signal_val_real, METH_VARARGS, "Set the value of a signal using a double precision float"},
+    {"set_signal_val_phys", set_signal_val_phys, METH_VARARGS, "Set the value of a signal using a physical type (value and unit)"},
     {"get_definition_name", get_definition_name, METH_VARARGS, "Get the name of a GPI object's definition"},
     {"get_definition_file", get_definition_file, METH_VARARGS, "Get the file that sources the object's definition"},
     {"get_handle_by_name", get_handle_by_name, METH_VARARGS, "Get handle of a named object"},
@@ -109,6 +115,8 @@ static PyMethodDef SimulatorMethods[] = {
     {"get_type_string", get_type_string, METH_VARARGS, "Get the type of an object as a string"},
     {"get_type", get_type, METH_VARARGS, "Get the type of an object, mapped to a GPI enumeration"},
     {"get_const", get_const, METH_VARARGS, "Get a flag indicating whether the object is a constant"},
+    {"get_is_port", get_is_port, METH_VARARGS, "Get a flag indicating whether the object is a port"},
+    {"get_port_direction_string", get_port_direction_string, METH_VARARGS, "Get the direction of a port as a string"},
     {"get_num_elems", get_num_elems, METH_VARARGS, "Get the number of elements contained in the handle"},
     {"get_range", get_range, METH_VARARGS, "Get the range of elements (tuple) contained in the handle, returns None if not indexable"},
     {"register_timed_callback", register_timed_callback, METH_VARARGS, "Register a timed callback"},

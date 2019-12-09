@@ -85,6 +85,8 @@ class SimHandleBase(object):
 
         self._name = simulator.get_name_string(self._handle)
         self._type = simulator.get_type_string(self._handle)
+        self._is_port = simulator.get_is_port(self._handle)
+        self._port_direction_string = simulator.get_port_direction_string(self._handle)
         self._fullname = self._name + "(%s)" % self._type
         self._path = self._name if path is None else path
         self._log = SimLog("cocotb.%s" % self._name)
@@ -749,6 +751,36 @@ class StringObject(ModifiableObject):
     def _getvalue(self):
         return simulator.get_signal_val_str(self._handle)
 
+class PhysicalObject(ModifiableObject):
+    """Specific object handle for Physcial signals and variables."""
+
+    def setimmediatevalue(self, value,  unit):
+        """Set the value of the underlying simulation object to *value* with *unit*.
+
+        This operation will fail unless the handle refers to a modifiable
+        object, e.g. net, signal or variable.
+
+        Args:
+            value (float): The value to drive onto the simulator object.
+            unit (str): The unit of *value*.
+
+        Raises:
+            TypeError: If target has an unsupported type for
+                 integer value assignment.
+        """
+        if not isinstance(value, float):
+            self._log.critical("Unsupported type for real value assignment: %s (%s)", type(value), repr(value))
+            raise TypeError("Unable to set simulator value with type %s" % (type(value)))
+
+        if not isinstance(unit, str):
+            self._log.critical("Unsupported type for unit assignment: %s (%s)", type(unit), repr(unit))
+            raise TypeError("Unable to set unit of value with type %s" % (type(unit)))
+
+        simulator.set_signal_val_phys(self._handle, value, unit)
+
+    def _getvalue(self):
+        return simulator.get_signal_val_phys(self._handle)
+
 _handle2obj = {}
 
 def SimHandle(handle, path=None):
@@ -774,6 +806,7 @@ def SimHandle(handle, path=None):
         simulator.ENUM:        EnumObject,
         simulator.STRING:      StringObject,
         simulator.GENARRAY:    HierarchyArrayObject,
+        simulator.PHYSICAL:    PhysicalObject,
     }
 
     # Enforce singletons since it's possible to retrieve handles avoiding

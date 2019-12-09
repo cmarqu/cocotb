@@ -68,7 +68,33 @@ entity dec_viterbi_ent is
 	s_axis_ctrl_tvalid : in std_logic;
 	s_axis_ctrl_tdata  : in std_logic_vector(31 downto 0);
 	s_axis_ctrl_tlast  : in std_logic;
-	s_axis_ctrl_tready : out std_logic
+	s_axis_ctrl_tready : out std_logic;
+        
+        dummy_in_string      : in string := "abc";
+        dummy_out_string     : out string(1 to 3);
+        dummy_inout_string   : inout string(1 to 3);
+        dummy_buffer_string  : buffer string(1 to 3);
+        dummy_in_integer      : in integer := 1;
+        dummy_out_integer     : out integer;
+        dummy_inout_integer   : inout integer;
+        dummy_buffer_integer  : buffer integer;
+        dummy_in_natural      : in natural := 1;
+        dummy_out_natural     : out natural;
+        dummy_inout_natural   : inout natural;
+        dummy_buffer_natural  : buffer natural;
+        dummy_in_positive      : in positive := 1;
+        dummy_out_positive     : out positive;
+        dummy_inout_positive   : inout positive;
+        dummy_buffer_positive  : buffer positive;
+        dummy_in_real      : in real := 1.1;
+        dummy_out_real     : out real;
+        dummy_inout_real   : inout real;
+        dummy_buffer_real  : buffer real;
+        dummy_in_time      : in time := 1.1 ns;
+        dummy_out_time     : out time;
+        dummy_inout_time   : inout time;
+        dummy_buffer_time  : buffer time
+        -- FIXME: check records, enums, time, physical types
 );
 end entity dec_viterbi_ent;
 

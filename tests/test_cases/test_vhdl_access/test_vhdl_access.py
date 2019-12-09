@@ -26,7 +26,7 @@
 import logging
 
 import cocotb
-from cocotb.handle import HierarchyObject, ModifiableObject, RealObject, IntegerObject, ConstantObject, EnumObject
+from cocotb.handle import HierarchyObject, ModifiableObject, RealObject, IntegerObject, ConstantObject, EnumObject, StringObject, PhysicalObject
 from cocotb.triggers import Timer
 from cocotb.result import TestError, TestFailure
 
@@ -37,18 +37,17 @@ def check_enum_object(dut):
 
     TODO: Implement an EnumObject class and detect valid string mappings
     """
-    yield Timer(100)
+    yield Timer(100, units='ns')
+    # ../../designs/viterbi_decoder_axi4s/src/ram_ctrl.vhd
     if not isinstance(dut.inst_ram_ctrl.write_ram_fsm, EnumObject):
         raise TestFailure("Expected the FSM enum to be an EnumObject")
 
 @cocotb.test()
 def check_objects(dut):
-    """
-    Check the types of objects that are returned
-    """
+    """Check the types of objects that are returned."""
     tlog = logging.getLogger("cocotb.test")
     fails = 0
-    yield Timer(100)
+    yield Timer(100, units='ns')
 
     def check_instance(obj, objtype):
         if not isinstance(obj, objtype):
@@ -59,6 +58,7 @@ def check_objects(dut):
         return 0
 
     # Hierarchy checks
+    # ../../designs/viterbi_decoder_axi4s/src/dec_viterbi.vhd
     fails += check_instance(dut.inst_axi4s_buffer, HierarchyObject)
     fails += check_instance(dut.gen_branch_distance[0], HierarchyObject)
     fails += check_instance(dut.gen_branch_distance[0].inst_branch_distance, HierarchyObject)
@@ -69,6 +69,39 @@ def check_objects(dut):
     fails += check_instance(dut.current_active, IntegerObject)
     fails += check_instance(dut.inst_axi4s_buffer.DATA_WIDTH, ConstantObject)
     fails += check_instance(dut.inst_ram_ctrl, HierarchyObject)
+
+    fails += check_instance(dut.dummy_in_string, StringObject)
+    fails += check_instance(dut.dummy_out_string, StringObject)
+    fails += check_instance(dut.dummy_inout_string, StringObject)
+    fails += check_instance(dut.dummy_buffer_string, StringObject)
+    fails += check_instance(dut.dummy_in_integer, IntegerObject)
+    fails += check_instance(dut.dummy_out_integer, IntegerObject)
+    fails += check_instance(dut.dummy_inout_integer, IntegerObject)
+    fails += check_instance(dut.dummy_buffer_integer, IntegerObject)
+    fails += check_instance(dut.dummy_in_natural, IntegerObject)
+    fails += check_instance(dut.dummy_out_natural, IntegerObject)
+    fails += check_instance(dut.dummy_inout_natural, IntegerObject)
+    fails += check_instance(dut.dummy_buffer_natural, IntegerObject)
+    fails += check_instance(dut.dummy_in_positive, IntegerObject)
+    fails += check_instance(dut.dummy_out_positive, IntegerObject)
+    fails += check_instance(dut.dummy_inout_positive, IntegerObject)
+    fails += check_instance(dut.dummy_buffer_positive, IntegerObject)
+    fails += check_instance(dut.dummy_in_real, RealObject)
+    fails += check_instance(dut.dummy_out_real, RealObject)
+    fails += check_instance(dut.dummy_inout_real, RealObject)
+    fails += check_instance(dut.dummy_buffer_real, RealObject)
+    # see https://github.com/cocotb/cocotb/issues/1233
+    fails += check_instance(dut.dummy_in_time, PhysicalObject)
+    fails += check_instance(dut.dummy_out_time, PhysicalObject)
+    fails += check_instance(dut.dummy_inout_time, PhysicalObject)
+    fails += check_instance(dut.dummy_buffer_time, PhysicalObject)
+
+    tlog.info("%s is %s" % (dut.aclk._fullname, dut.aclk.__class__.__name__))
+    if not dut.aclk._is_port:
+        tlog.error("dut.aclk should be port")
+
+    if not dut.aclk._port_direction_string == "GPI_INPUT":
+        tlog.error("dut.aclk should be GPI_INPUT")
 
     if dut.inst_axi4s_buffer.DATA_WIDTH != 32:
         tlog.error("Expected dut.inst_axi4s_buffer.DATA_WIDTH to be 32 but got %d",
@@ -96,10 +129,10 @@ def check_objects(dut):
 def port_not_hierarchy(dut):
     """
     Test for issue raised by Luke - iteration causes a toplevel port type to
-    change from from ModifiableObject to HierarchyObject
+    change from ModifiableObject to HierarchyObject
     """
     tlog = logging.getLogger("cocotb.test")
-    yield Timer(100)
+    yield Timer(100, units='ns')
     if not isinstance(dut.aclk, ModifiableObject):
         tlog.error("dut.aclk should be ModifiableObject but got %s", dut.aclk.__class__.__name__)
     else:

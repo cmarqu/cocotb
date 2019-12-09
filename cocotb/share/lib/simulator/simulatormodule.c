@@ -622,6 +622,24 @@ static PyObject *get_signal_val_long(PyObject *self, PyObject *args)
 }
 
 
+static PyObject *get_signal_val_phys(PyObject *self, PyObject *args)
+{
+    // FIXME: what to do here?
+//    gpi_sim_hdl hdl;
+//    double result;
+//    PyObject *retval;
+//
+//    if (!PyArg_ParseTuple(args, "O&", gpi_sim_hdl_converter, &hdl)) {
+//        return NULL;
+//    }
+//
+//    result = gpi_get_signal_value_real(hdl);
+//    retval = Py_BuildValue("d", result);
+//
+//    return retval;
+}
+
+
 static PyObject *set_signal_val_str(PyObject *self, PyObject *args)
 {
     gpi_sim_hdl hdl;
@@ -665,6 +683,27 @@ static PyObject *set_signal_val_long(PyObject *self, PyObject *args)
     }
 
     gpi_set_signal_value_long(hdl, value);
+    res = Py_BuildValue("s", "OK!");
+
+    return res;
+}
+
+static PyObject *set_signal_val_phys(PyObject *self, PyObject *args)
+{
+    gpi_sim_hdl hdl;
+    double value;
+    const char *unit;
+    PyObject *res;
+
+    if (!PyArg_ParseTuple(args, "O&d", gpi_sim_hdl_converter, &hdl, &value)) {
+        return NULL;
+    }
+
+    if (!PyArg_ParseTuple(args, "O&s", gpi_sim_hdl_converter, &hdl, &unit)) {
+        return NULL;
+    }
+
+    gpi_set_signal_value_phys(hdl, value, unit);
     res = Py_BuildValue("s", "OK!");
 
     return res;
@@ -806,6 +845,38 @@ static PyObject *get_const(PyObject *self, PyObject *args)
     pyresult = Py_BuildValue("i", result);
 
     return pyresult;
+}
+
+static PyObject *get_is_port(PyObject *self, PyObject *args)
+{
+    int result;
+    gpi_sim_hdl hdl;
+    PyObject *pyresult;
+
+    if (!PyArg_ParseTuple(args, "O&", gpi_sim_hdl_converter, &hdl)) {
+        return NULL;
+    }
+
+    result = gpi_is_port((gpi_sim_hdl)hdl);
+    pyresult = Py_BuildValue("i", result);
+
+    return pyresult;
+}
+
+static PyObject *get_port_direction_string(PyObject *self, PyObject *args)
+{
+    const char *result;
+    gpi_sim_hdl hdl;
+    PyObject *retstr;
+
+    if (!PyArg_ParseTuple(args, "O&", gpi_sim_hdl_converter, &hdl)) {
+        return NULL;
+    }
+
+    result = gpi_get_port_direction_str(gpi_port_direction((gpi_sim_hdl)hdl));
+    retstr = Py_BuildValue("s", result);
+
+    return retstr;
 }
 
 static PyObject *get_type_string(PyObject *self, PyObject *args)
@@ -953,12 +1024,18 @@ static void add_module_constants(PyObject* simulator)
     rc |= PyModule_AddIntConstant(simulator, "INTEGER",       GPI_INTEGER);
     rc |= PyModule_AddIntConstant(simulator, "STRING",        GPI_STRING);
     rc |= PyModule_AddIntConstant(simulator, "GENARRAY",      GPI_GENARRAY);
+    rc |= PyModule_AddIntConstant(simulator, "PHYSICAL",      GPI_PHYSICAL);
     rc |= PyModule_AddIntConstant(simulator, "OBJECTS",       GPI_OBJECTS);
     rc |= PyModule_AddIntConstant(simulator, "DRIVERS",       GPI_DRIVERS);
     rc |= PyModule_AddIntConstant(simulator, "LOADS",         GPI_LOADS);
+    rc |= PyModule_AddIntConstant(simulator, "UNDEFINED",     GPI_UNDEFINED);
+    rc |= PyModule_AddIntConstant(simulator, "INPUT",         GPI_INPUT);
+    rc |= PyModule_AddIntConstant(simulator, "OUTPUT",        GPI_OUTPUT);
+    rc |= PyModule_AddIntConstant(simulator, "INOUT",         GPI_INOUT);
+
 
     if (rc != 0)
-        fprintf(stderr, "Failed to add module constants!\n");
+        fprintf(stderr, "simulatormodule.c: Failed to add module constants!\n");
 }
 
 #if PY_MAJOR_VERSION >= 3

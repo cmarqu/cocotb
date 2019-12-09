@@ -66,6 +66,7 @@ const char * GpiObjHdl::get_type_str()
         CASE_OPTION(GPI_INTEGER);
         CASE_OPTION(GPI_STRING);
         CASE_OPTION(GPI_GENARRAY);
+        CASE_OPTION(GPI_PHYSICAL);
         default:
             ret = "unknown";
     }
@@ -78,7 +79,7 @@ const std::string & GpiObjHdl::get_name()
     return m_name;
 }
 
-/* Genertic base clss implementations */
+/* Generic base class implementations */
 char *GpiHdl::gpi_copy_name(const char *name)
 {
     int len;
@@ -118,6 +119,16 @@ int GpiObjHdl::initialise(std::string &name, std::string &fq_name)
 {
     m_name = name;
     m_fullname = fq_name;
+    return 0;
+}
+
+int GpiObjHdl::initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction)
+{
+    LOG_DEBUG("Setting is_port %d and port_direction %d", is_port, port_direction);
+    m_name = name;
+    m_fullname = fq_name;
+    m_is_port = is_port;
+    m_port_direction = port_direction;
     return 0;
 }
 
