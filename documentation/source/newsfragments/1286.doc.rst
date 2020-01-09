@@ -1,0 +1,1 @@
+New example ``matrix_multiplier``.

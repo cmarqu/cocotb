@@ -1,0 +1,7 @@
+[tool.towncrier]
+    package = "cocotb"
+    directory = "documentation/source/newsfragments"
+    filename = "documentation/source/release_notes.rst"
+    issue_format = ":pr:`{issue}`"
+    underlines = '=-^"'  # the full ist is '#*=-^"' but the two highest levels are not handled by towncrier
+    all_bullets = false

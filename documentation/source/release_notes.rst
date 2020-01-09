@@ -4,6 +4,8 @@ Release Notes
 
 All releases are available from the `GitHub Releases Page <https://github.com/cocotb/cocotb/releases>`_.
 
+.. towncrier release notes start
+
 cocotb 1.3.0
 ============
 
