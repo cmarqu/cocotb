@@ -60,7 +60,8 @@ entity sample_module is
         stream_out_real                 : out   real;
         stream_out_int                  : out   integer;
         stream_out_string               : out   string(1 to 8);
-        stream_out_bool                 : out   boolean
+        stream_out_bool                 : out   boolean;
+        and_output                      : out   std_ulogic
     );
 end;
 
@@ -98,6 +99,9 @@ end afunc;
   signal cosLut1, sinLut1 : lutType;
   signal cosLut,  sinLut  : lutType;
 
+  type t_register_array is array (1 downto 0) of std_ulogic_vector(7 downto 0);
+  signal register_array : t_register_array;
+
 begin
 
 process (clk) begin
@@ -113,6 +117,8 @@ stream_out_int       <= stream_in_int;
 stream_out_string    <= stream_in_string;
 stream_out_bool      <= stream_in_bool;
 stream_out_data_wide(3 downto 2) <= stream_in_data_wide(3 downto 2);
+
+and_output <= stream_out_ready and stream_in_valid;
 
 isample_module1 : component sample_module_1
       generic map (
