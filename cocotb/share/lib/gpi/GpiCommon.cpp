@@ -136,7 +136,7 @@ void gpi_embed_end()
 
 void gpi_sim_end()
 {
-    registered_impls[0]->sim_end();
+  //    registered_impls[0]->sim_end();
 }
 
 void gpi_cleanup(void)
