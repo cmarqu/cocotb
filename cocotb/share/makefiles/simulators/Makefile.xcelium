@@ -79,8 +79,8 @@ endif
 # which does not play nice with our multi language, so we supply GPI_EXTRA=cocotbvhpi if needed.
 
 #GPI_EXTRA:=
+GPI_ARGS = -loadvpi $(LIB_DIR)/libcocotbvpi:vlog_startup_routines_bootstrap
 ifeq ($(TOPLEVEL_LANG),verilog)
-    GPI_ARGS = -loadvpi $(LIB_DIR)/libvpi
     HDL_SOURCES = $(VERILOG_SOURCES)
     ROOT_LEVEL = $(TOPLEVEL)
     EXTRA_ARGS += -top $(TOPLEVEL)
