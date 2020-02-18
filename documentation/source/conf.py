@@ -264,8 +264,9 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'cocotb', u'cocotb Documentation',
-     [u'PotentialVentures'], 1)
+    ('index', 'cocotb', 'cocotb Documentation', ['PotentialVentures'], 1),
+    ('library_reference', 'cocotb-ref', 'cocotb Reference Documentation', ['PotentialVentures'], 1),
+    ('library_reference_c', 'cocotb-ref-c', 'cocotb C/C++ Reference Documentation', ['PotentialVentures'], 1),
 ]
 
 # If true, show URL addresses after external links.
