@@ -273,3 +273,14 @@ Additional Environment Variables
     Path to the directory containing the cocotb Makefiles and simulator libraries in the subdirectories
     :file:`lib`, :file:`include`, and :file:`makefiles`.
     You don't normally need to modify this.
+
+.. envvar:: GPI_EXTRA
+
+    A comma-separated list of extra libraries that are dynamically loaded at runtime.
+    One can also specify a custom entry point after ``:``.
+
+    For example:
+
+    ``GPI_EXTRA=name`` will load ``libname.so`` with default entry point ``name_entry_point``.
+
+    ``GPI_EXTRA=nameA:entryA,nameB:entryB`` will load ``libnamaA.so`` with entry ``entryA`` and ``libnameB.so`` with entry ``entryB``.

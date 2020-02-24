@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 using namespace std;
 
@@ -160,7 +161,23 @@ static void gpi_load_libs(std::vector<std::string> to_load)
          iter++)
     {
         void *lib_handle = NULL;
-        std::string full_name = "lib" + *iter + DOT_LIB_EXT;
+
+        std::string arg = *iter;
+
+        std::string lib_name;
+        std::string func_name;
+        auto it = std::find(arg.begin(), arg.end(), ':');
+        if (it == arg.end()) {
+            // no colon in the string, default
+            lib_name = arg;
+            func_name = arg + "_entry_point";
+        }
+        else {
+            lib_name = std::string(arg.begin(), it);
+            func_name = std::string(it+1, arg.end());
+        }
+
+        std::string full_name = "lib" + lib_name + DOT_LIB_EXT;
         const char *now_loading = (full_name).c_str();
 
         lib_handle = utils_dyn_open(now_loading);
@@ -168,10 +185,10 @@ static void gpi_load_libs(std::vector<std::string> to_load)
             printf("cocotb: Error loading shared library %s\n", now_loading);
             exit(1);
         }
-        std::string sym = (*iter) + "_entry_point";
-        void *entry_point = utils_dyn_sym(lib_handle, sym.c_str());
+
+        void *entry_point = utils_dyn_sym(lib_handle, func_name.c_str());
         if (!entry_point) {
-            printf("cocotb: Unable to find entry point %s for shared library %s\n", sym.c_str(), now_loading);
+            printf("cocotb: Unable to find entry point %s for shared library %s\n", func_name.c_str(), now_loading);
             exit(1);
         }
 
@@ -192,7 +209,7 @@ void gpi_load_extra_libs()
 
     if (lib_env) {
         std::string lib_list = lib_env;
-        std::string delim = ":";
+        std::string delim = ",";
         std::vector<std::string> to_load;
 
         size_t e_pos = 0;

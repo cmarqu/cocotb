@@ -1,0 +1,4 @@
+Add ability to provide custom entry points for libraries in :envvar:`GPI_EXTRA`.
+Entry points can be defined after ``:`` in the format ``lib_name_X:A_entry_point,lib_name_Y:B_entry_point``.
+The delimiter between each library in the list has changed from ``:`` to ``,``.
+It follows convention used by some simulators to load libraries.
