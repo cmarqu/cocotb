@@ -346,3 +346,16 @@ in_progress_notes = subprocess.check_output(['towncrier', '--draft'],
                                             universal_newlines=True)
 with open('generated/master-notes.rst', 'w') as f:
     f.write(in_progress_notes)
+
+# -- Extra setup for sphinx.ext.autosectionlabel--------------------------------
+# see also https://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html
+
+# True to prefix each section label with the name of the document it is in, followed by a colon.
+# For example, index:Introduction for a section called Introduction that appears in document index.rst.
+# Useful for avoiding ambiguity when the same section heading appears in different documents.
+autosectionlabel_prefix_document = True
+
+# If set, autosectionlabel chooses the sections for labeling by its depth.
+# For example, when set 1 to autosectionlabel_maxdepth, labels are generated only for
+# top level sections, and deeper sections are not labeled. It defaults to None (disabled).
+# autosectionlabel_maxdepth = 2

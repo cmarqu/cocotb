@@ -51,7 +51,7 @@ Bus monitors should inherit from the :any:`cocotb.monitors.BusMonitor` class.
 Packaging extensions
 --------------------
 
-To package a cocotb extension as Python package follow the :ref:`naming conventions <Naming conventions>`, and the `normal Python packaging rules <https://packaging.python.org/tutorials/packaging-projects/>`_.
+To package a cocotb extension as Python package follow the :ref:`extensions:naming conventions`, and the `normal Python packaging rules <https://packaging.python.org/tutorials/packaging-projects/>`_.
 Extensions namespaced packages, implemented using the `native namespacing <https://packaging.python.org/guides/packaging-namespace-packages/#native-namespace-packages>`_ approach discussed in :pep:`420`.
 The module file hierarchy should be as follows (replace ``EXTNAME`` with the name of the extension, e.g. ``spi``).
 

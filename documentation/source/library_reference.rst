@@ -198,8 +198,6 @@ Simulation Object Handles
     :show-inheritance:
     :synopsis: Classes for simulation objects.
 
-.. assigment-methods-section
-
 Assignment Methods
 ------------------
 

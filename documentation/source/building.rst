@@ -53,7 +53,7 @@ and
 .. make:var:: WAVES
 
       Set this to 1 to enable wave traces dump for the Aldec Riviera-PRO and Mentor Graphics Questa simulators.
-      To get wave traces in Icarus Verilog see :ref:`Simulator Support`.
+      To get wave traces in Icarus Verilog see :ref:`simulator_support:Simulator Support`.
 
 .. make:var:: VERILOG_SOURCES
 
