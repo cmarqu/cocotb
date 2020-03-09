@@ -137,6 +137,15 @@ and
       Use to define a scratch directory for use by the simulator. The path is relative to the Makefile location.
       If not provided, the default scratch directory is :file:`sim_build`.
 
+.. make:var:: LICENSE_QUEUE
+ 
+      For simulators that require a license, 
+      use this variable to wait until a simulator license is available instead of exiting the simulation.
+
+      .. versionchanged:: 1.4
+
+         Implement this also for Cadence Xcelium and Synopsys VCS in addition to the existing support in Aldec Riviera-PRO.
+
 
 Environment Variables
 =====================

@@ -61,6 +61,7 @@ CUSTOM_COMPILE_DEPS       Add additional dependencies to the compilation target
 CUSTOM_SIM_DEPS           Add additional dependencies to the simulation target
 COCOTB_NVC_TRACE          Set this to 1 to enable display of VHPI traces for NVC
 SIM_BUILD                 Define a scratch directory for use by the simulator
+LICENSE_QUEUE             Wait until a simulator license is available
 
 Environment Variables
 ---------------------
