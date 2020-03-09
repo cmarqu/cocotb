@@ -45,16 +45,26 @@ else
     export XCELIUM_BIN_DIR
 endif
 
+# FIXME: also applicable to compiler?
+ifeq ($(LICENSE_QUEUE), 1)
+    SIM_ARGS += -licqueue
+endif
+
 EXTRA_ARGS += $(COMPILE_ARGS)
 EXTRA_ARGS += $(SIM_ARGS)
-EXTRA_ARGS += -licqueue
 
 ifneq ($(ARCH),i686)
     EXTRA_ARGS += -64
 endif
 
 EXTRA_ARGS += -xmlibdirpath $(SIM_BUILD)
-ifeq ($(DEBUG),1)
+
+ifeq ($(DEBUG), 1)
+    @echo "The variable DEBUG is deprecated, please use COCOTB_SIM_DEBUG instead."
+    COCOTB_SIM_DEBUG := $(DEBUG)
+endif
+
+ifeq ($(COCOTB_SIM_DEBUG), 1)
     EXTRA_ARGS += -pliverbose
     EXTRA_ARGS += -messages
     EXTRA_ARGS += -plidebug             # Enhance the profile output with PLI info

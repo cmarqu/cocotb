@@ -1,0 +1,1 @@
+cocotb now supports license queueing for the Cadence Xcelium and Synopsys VCS simulators with the :make:var:`LICENSE_QUEUE` variable.

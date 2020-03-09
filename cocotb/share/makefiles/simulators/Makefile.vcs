@@ -58,6 +58,11 @@ endif
 ifeq ($(GUI),1)
     EXTRA_ARGS += -gui
 endif
+ 
+# FIXME: also applicable to compiler?
+ifeq ($(LICENSE_QUEUE), 1)
+    SIM_ARGS += -licqueue
+endif
 
 # TODO:
 # investigate +vpi+1 option which reduces memory requirements
