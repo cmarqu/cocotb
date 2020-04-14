@@ -19,7 +19,7 @@ ARG MAKE_JOBS=-j2
 # Simulation
 ARG ICARUS_VERILOG_VERSION=10_2
 
-RUN apt-get -qq update && apt-get -qq install -y --no-install-recommends \
+RUN sudo apt-get -qq update && apt-get -qq install -y --no-install-recommends \
        wget \
        git \
        gperf \
