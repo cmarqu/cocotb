@@ -27,8 +27,9 @@ RUN apt-get -q update && apt-get install -yq \
        virtualenv \
        python3-venv \
        swig \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip3 install --upgrade pip \
+    && rm -rf /var/lib/apt/lists/*
+    
+RUN pip3 install --upgrade pip \
     && g++ --version
 
 ARG PYTHON_VERSION=3.7.7
