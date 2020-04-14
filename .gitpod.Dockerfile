@@ -19,15 +19,7 @@ ARG MAKE_JOBS=-j2
 # Simulation
 ARG ICARUS_VERILOG_VERSION=10_2
 
-RUN apt-get -q update && apt-get install -yq --no-install-recommends \
-       wget \
-       git \
-       gperf \
-       make \
-       autoconf \
-       g++ \
-       flex \
-       bison \
+RUN apt-get -q update && apt-get install -yq \
        python3-dev \
        python3-pip \
        python3-setuptools \
@@ -36,7 +28,6 @@ RUN apt-get -q update && apt-get install -yq --no-install-recommends \
        python3-venv \
        swig \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
     && pip3 install --upgrade pip \
     && g++ --version
 
