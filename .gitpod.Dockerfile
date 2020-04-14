@@ -48,7 +48,7 @@ ENV ICARUS_VERILOG_VERSION=${ICARUS_VERILOG_VERSION}
 RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch v${ICARUS_VERILOG_VERSION} \
     && cd iverilog \
     && sh autoconf.sh \
-    && ./configure \
+    && ./configure --prefix ${HOME} \
     && make -s ${MAKE_JOBS} \
     && make -s install \
     && cd ..
