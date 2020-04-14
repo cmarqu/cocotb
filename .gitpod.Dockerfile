@@ -16,7 +16,7 @@ ARG MAKE_JOBS=-j2
 # Simulation
 ARG ICARUS_VERILOG_VERSION=10_2
 
-RUN sudo apt-get -q update && apt-get install -yq \
+RUN sudo apt-get -q update && sudo apt-get install -yq \
        python3-dev \
        python3-pip \
        python3-setuptools \
