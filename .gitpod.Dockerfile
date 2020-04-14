@@ -1,5 +1,4 @@
 FROM gitpod/workspace-full-vnc
-#FROM ubuntu:16.04
 
 USER gitpod
 
@@ -10,8 +9,12 @@ USER gitpod
 #
 # More information: https://www.gitpod.io/docs/config-docker/
 
-# travis-ci only provides 2
-ARG MAKE_JOBS=-j2
+# Install custom tools, runtime, etc.
+RUN sudo apt-get update \
+    && sudo apt-get install -y \
+        swig \
+    && rm -rf /var/lib/apt/lists/*
+
 
 # Simulation
 ARG ICARUS_VERILOG_VERSION=10_2
