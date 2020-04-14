@@ -1,5 +1,6 @@
-FROM gitpod/workspace-full-vnc
-                    
+# FROM gitpod/workspace-full-vnc
+FROM ubuntu:16.04
+
 USER gitpod
 
 # Install custom tools, runtime, etc. using apt-get
