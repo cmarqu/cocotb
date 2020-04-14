@@ -11,7 +11,7 @@ USER gitpod
 # More information: https://www.gitpod.io/docs/config-docker/
 
 
-
+USER root
 
 # travis-ci only provides 2
 ARG MAKE_JOBS=-j2
@@ -39,6 +39,8 @@ RUN apt-get -qq update && apt-get -qq install -y --no-install-recommends \
     && apt-get clean \
     && pip3 install --upgrade pip \
     && g++ --version
+
+USER gitpod
 
 # Icarus Verilog
 ENV ICARUS_VERILOG_VERSION=${ICARUS_VERILOG_VERSION}
