@@ -24,11 +24,9 @@ RUN apt-get -q update && apt-get install -yq \
        python3-pip \
        python3-setuptools \
        python3 \
-       virtualenv \
-       python3-venv \
        swig \
     && rm -rf /var/lib/apt/lists/*
-    
+
 RUN pip3 install --upgrade pip \
     && g++ --version
 
