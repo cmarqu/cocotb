@@ -1,5 +1,5 @@
-FROM gitpod/workspace-full-vnc
-#FROM ubuntu:16.04
+#FROM gitpod/workspace-full-vnc
+FROM ubuntu:16.04
 
 USER gitpod
 
