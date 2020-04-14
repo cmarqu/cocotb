@@ -46,10 +46,12 @@ USER gitpod
 ENV ICARUS_VERILOG_VERSION=${ICARUS_VERILOG_VERSION}
 #WORKDIR /tmp/usr/src/iverilog
 RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch v${ICARUS_VERILOG_VERSION} \
+    && cd iverilog \
     && sh autoconf.sh \
     && ./configure \
     && make -s ${MAKE_JOBS} \
-    && make -s install
+    && make -s install \
+    && cd ..
 
 # make sources available in docker image - one copy per python version
 COPY . /src
