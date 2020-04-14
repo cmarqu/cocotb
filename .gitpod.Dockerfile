@@ -1,5 +1,5 @@
-#FROM gitpod/workspace-full-vnc
-FROM ubuntu:16.04
+FROM gitpod/workspace-full-vnc
+#FROM ubuntu:16.04
 
 USER gitpod
 
@@ -19,7 +19,7 @@ ARG MAKE_JOBS=-j2
 # Simulation
 ARG ICARUS_VERILOG_VERSION=10_2
 
-RUN apt-get -qq update && apt-get -qq install -y --no-install-recommends \
+RUN apt-get -q update && apt-get install -yq --no-install-recommends \
        wget \
        git \
        gperf \
