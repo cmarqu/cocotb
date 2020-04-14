@@ -1,7 +1,7 @@
 # FROM gitpod/workspace-full-vnc
 FROM ubuntu:16.04
 
-USER gitpod
+#USER gitpod
 
 # Install custom tools, runtime, etc. using apt-get
 # For example, the command below would install "bastet" - a command line tetris clone:
@@ -35,10 +35,10 @@ RUN sudo apt-get -qq update && apt-get -qq install -y --no-install-recommends \
        virtualenv \
        python3-venv \
        swig \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    && pip3 install --upgrade pip \
-    && g++ --version
+    && sudo rm -rf /var/lib/apt/lists/* \
+    && sudo apt-get clean \
+    && sudo pip3 install --upgrade pip \
+    && sudo g++ --version
 
 # Icarus Verilog
 ENV ICARUS_VERILOG_VERSION=${ICARUS_VERILOG_VERSION}
