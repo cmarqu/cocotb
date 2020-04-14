@@ -18,10 +18,7 @@ ARG ICARUS_VERILOG_VERSION=10_2
 
 RUN sudo apt-get -q update && sudo apt-get install -yq \
        python3-dev \
-       python3-pip \
-       python3-setuptools \
        python3 \
-       swig \
     && sudo rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --upgrade pip \
