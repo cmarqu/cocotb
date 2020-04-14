@@ -28,7 +28,7 @@ RUN apt-get -qq update && apt-get -qq install -y --no-install-recommends \
        g++ \
        flex \
        bison \
-       python3-dev\
+       python3-dev \
        python3-pip \
        python3-setuptools \
        python3 \
@@ -40,12 +40,13 @@ RUN apt-get -qq update && apt-get -qq install -y --no-install-recommends \
     && pip3 install --upgrade pip \
     && g++ --version
 
-USER gitpod
+ARG PYTHON_VERSION=3.7.7
+RUN PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install ${PYTHON_VERSION}
 
 # Icarus Verilog
 ENV ICARUS_VERILOG_VERSION=${ICARUS_VERILOG_VERSION}
-#WORKDIR /tmp/usr/src/iverilog
-RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch v${ICARUS_VERILOG_VERSION} \
+WORKDIR /usr/src/iverilog
+RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch v${ICARUS_VERILOG_VERSION} . \
     && cd iverilog \
     && sh autoconf.sh \
     && ./configure --prefix ${HOME} \
@@ -55,3 +56,5 @@ RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch v${
 
 # make sources available in docker image - one copy per python version
 COPY . /src
+
+USER gitpod
