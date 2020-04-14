@@ -44,7 +44,7 @@ USER gitpod
 
 # Icarus Verilog
 ENV ICARUS_VERILOG_VERSION=${ICARUS_VERILOG_VERSION}
-WORKDIR /usr/src/iverilog
+# WORKDIR /usr/src/iverilog
 RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch v${ICARUS_VERILOG_VERSION} . \
     && sh autoconf.sh \
     && ./configure \
