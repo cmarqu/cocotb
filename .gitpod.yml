@@ -1,4 +1,6 @@
 tasks:
   - init: pip3 install -v -e .
+    command: cd examples/dff/tests && make SIM=icarus
+    command: cd examples/dff/tests && make SIM=verilator
 image:
   file: .gitpod.Dockerfile
