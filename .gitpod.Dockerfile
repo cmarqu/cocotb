@@ -10,13 +10,6 @@ USER gitpod
 # More information: https://www.gitpod.io/docs/config-docker/
 
 # Install custom tools, runtime, etc.
-RUN sudo apt-get update \
-    && sudo apt-get install -y \
-        swig \
-    && rm -rf /var/lib/apt/lists/*
-
-
-# Simulation
 ARG ICARUS_VERILOG_VERSION=10_2
 
 RUN sudo rm -rf /var/lib/apt/lists/* && \
