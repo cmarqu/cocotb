@@ -13,9 +13,9 @@ USER root
 # Install custom tools, runtime, etc.
 ARG ICARUS_VERILOG_VERSION=10_2
 
-RUN sudo rm -rf /var/lib/apt/lists/*
-RUN sudo apt-get -q update
-RUN sudo apt-get install -yq \
+RUN rm -rf /var/lib/apt/lists/*
+RUN apt-get -q update
+RUN apt-get install -yq \
        python3-dev \
        python3
 
