@@ -27,7 +27,7 @@ ARG ICARUS_VERILOG_BRANCH=v10_2
 ENV ICARUS_VERILOG_BRANCH=${ICARUS_VERILOG_VERSION}
 WORKDIR /usr/src/iverilog
 USER root
-RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch ${ICARUS_VERILOG_BRANCH}} . \
+RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch ${ICARUS_VERILOG_BRANCH} . \
     && sh autoconf.sh \
     && ./configure --prefix ${HOME} \
     && make -s ${MAKE_JOBS} \
