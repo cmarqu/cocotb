@@ -19,10 +19,10 @@ RUN sudo apt-get update \
 # Simulation
 ARG ICARUS_VERILOG_VERSION=10_2
 
-RUN sudo apt-get -q update && sudo apt-get install -yq \
+RUN sudo rm -rf /var/lib/apt/lists/* && \
+       sudo apt-get -q update && sudo apt-get install -yq \
        python3-dev \
-       python3 \
-    && sudo rm -rf /var/lib/apt/lists/*
+       python3
 
 RUN pip3 install --upgrade pip \
     && g++ --version
