@@ -24,7 +24,7 @@ ARG MAKE_JOBS=-j8
 
 # Icarus Verilog
 ARG ICARUS_VERILOG_BRANCH=v10_2
-ENV ICARUS_VERILOG_BRANCH=${ICARUS_VERILOG_VERSION}
+ENV ICARUS_VERILOG_BRANCH=${ICARUS_VERILOG_BRANCH}
 WORKDIR /usr/src/iverilog
 USER root
 RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch ${ICARUS_VERILOG_BRANCH} . \
