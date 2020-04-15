@@ -18,7 +18,7 @@ RUN pyenv global ${PYTHON_VERSION}
 
 RUN pip3 install --upgrade pip
 
-brew install gperf
+RUN brew install gperf
 
 # Icarus Verilog
 ARG MAKE_JOBS=-j8
