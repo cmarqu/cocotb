@@ -20,18 +20,33 @@ RUN pip3 install --upgrade pip
 
 RUN brew install gperf flex bison
 
-# Icarus Verilog
 ARG MAKE_JOBS=-j8
-ARG ICARUS_VERILOG_VERSION=10_2
-ENV ICARUS_VERILOG_VERSION=${ICARUS_VERILOG_VERSION}
+
+# Icarus Verilog
+ARG ICARUS_VERILOG_BRANCH=v10_2
+ENV ICARUS_VERILOG_BRANCH=${ICARUS_VERILOG_VERSION}
 WORKDIR /usr/src/iverilog
 USER root
-RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch v${ICARUS_VERILOG_VERSION} . \
+RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch ${ICARUS_VERILOG_BRANCH}} . \
     && sh autoconf.sh \
     && ./configure --prefix ${HOME} \
     && make -s ${MAKE_JOBS} \
     && make -s install \
     && cd ..
 USER gitpod
+
+# Verilator 
+ARG VERILATOR_BRANCH=master
+ENV VERILATOR_BRANCH=${VERILATOR_BRANCH}
+WORKDIR /usr/src/verilator
+USER root
+RUN git clone https://github.com/verilator/verilator.git --depth=1 --branch ${VERILATOR_BRANCH} . \
+    && autoconf \
+    && ./configure --prefix ${HOME} \
+    && make -s ${MAKE_JOBS} \
+    && make -s install \
+    && cd ..
+USER gitpod
+
 # make sources available in docker image - one copy per Python version
 COPY . /src
