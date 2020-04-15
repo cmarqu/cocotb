@@ -18,7 +18,7 @@ RUN pyenv global ${PYTHON_VERSION}
 
 RUN pip3 install --upgrade pip
 
-RUN brew install gperf
+RUN brew install gperf flex bison
 
 # Icarus Verilog
 ARG MAKE_JOBS=-j8
