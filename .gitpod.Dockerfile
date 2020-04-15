@@ -1,6 +1,7 @@
 FROM gitpod/workspace-full-vnc
 
-USER gitpod
+#USER gitpod
+USER root
 
 # Install custom tools, runtime, etc. using apt-get
 # For example, the command below would install "bastet" - a command line tetris clone:
@@ -12,10 +13,13 @@ USER gitpod
 # Install custom tools, runtime, etc.
 ARG ICARUS_VERILOG_VERSION=10_2
 
-RUN sudo rm -rf /var/lib/apt/lists/* && \
-       sudo apt-get -q update && sudo apt-get install -yq \
+RUN sudo rm -rf /var/lib/apt/lists/*
+RUN sudo apt-get -q update
+RUN sudo apt-get install -yq \
        python3-dev \
        python3
+
+USER gitpod
 
 RUN pip3 install --upgrade pip \
     && g++ --version
