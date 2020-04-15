@@ -23,12 +23,13 @@ ARG MAKE_JOBS=-j8
 ARG ICARUS_VERILOG_VERSION=10_2
 ENV ICARUS_VERILOG_VERSION=${ICARUS_VERILOG_VERSION}
 WORKDIR /usr/src/iverilog
+USER root
 RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch v${ICARUS_VERILOG_VERSION} . \
     && sh autoconf.sh \
     && ./configure --prefix ${HOME} \
     && make -s ${MAKE_JOBS} \
     && make -s install \
     && cd ..
-
+USER gitpod
 # make sources available in docker image - one copy per Python version
 COPY . /src
