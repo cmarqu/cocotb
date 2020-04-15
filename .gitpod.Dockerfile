@@ -35,18 +35,18 @@ RUN git clone https://github.com/steveicarus/iverilog.git --depth=1 --branch ${I
     && cd ..
 USER gitpod
 
-# Verilator 
-ARG VERILATOR_BRANCH=master
-ENV VERILATOR_BRANCH=${VERILATOR_BRANCH}
-WORKDIR /usr/src/verilator
-USER root
-RUN git clone https://github.com/verilator/verilator.git --depth=1 --branch ${VERILATOR_BRANCH} . \
-    && autoconf \
-    && ./configure --prefix ${HOME} \
-    && make -s ${MAKE_JOBS} \
-    && make -s install \
-    && cd ..
-USER gitpod
+## Verilator 
+#ARG VERILATOR_BRANCH=master
+#ENV VERILATOR_BRANCH=${VERILATOR_BRANCH}
+#WORKDIR /usr/src/verilator
+#USER root
+#RUN git clone https://github.com/verilator/verilator.git --depth=1 --branch ${VERILATOR_BRANCH} . \
+#    && autoconf \
+#    && ./configure --prefix ${HOME} \
+#    && make -s ${MAKE_JOBS} \
+#    && make -s install \
+#    && cd ..
+#USER gitpod
 
 # make sources available in docker image - one copy per Python version
 COPY . /src
