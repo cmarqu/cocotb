@@ -4,7 +4,7 @@ tasks:
       pip3 install -v -e .
       rm /tmp/.install-lock
   - init: sleep 1 && while [ -f /tmp/.install-lock ]; do sleep 1; done
-    command: cd examples/dff/tests && make SIM=icarus
-#    command: cd examples/dff/tests && make SIM=verilator
+    command: cd /workspace/cocotb/examples/dff/tests && make SIM=icarus
+    command: cd /workspace/cocotb/examples/dff/tests && make SIM=verilator
 image:
   file: .gitpod.Dockerfile
