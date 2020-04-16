@@ -2,17 +2,10 @@ FROM gitpod/workspace-full-vnc
 
 USER gitpod
 
-# Install custom tools, runtime, etc. using apt-get
-# For example, the command below would install "bastet" - a command line tetris clone:
-#
-# RUN sudo apt-get -q update && #     sudo apt-get install -yq bastet && #     sudo rm -rf /var/lib/apt/lists/*
-#
-# More information: https://www.gitpod.io/docs/config-docker/
-
 # Install custom tools, runtime, etc.
 
 ARG PYTHON_VERSION=3.8.2
-RUN rm -rf ${HOME}.pyenv/versions/${PYTHON_VERSION}
+RUN rm -rf ${HOME}/.pyenv/versions/${PYTHON_VERSION}
 RUN PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install ${PYTHON_VERSION}
 RUN pyenv global ${PYTHON_VERSION}
 
