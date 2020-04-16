@@ -40,7 +40,9 @@ ARG VERILATOR_BRANCH=master
 ENV VERILATOR_BRANCH=${VERILATOR_BRANCH}
 WORKDIR /usr/src/verilator
 USER root
+
 RUN git clone https://github.com/verilator/verilator.git --branch ${VERILATOR_BRANCH} . \
+    &&  cp /usr/include/FlexLexer.h src/ \
     && autoconf \
     && ./configure --prefix ${HOME} \
     && make -s ${MAKE_JOBS} \
