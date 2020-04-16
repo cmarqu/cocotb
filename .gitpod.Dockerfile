@@ -42,7 +42,7 @@ WORKDIR /usr/src/verilator
 USER root
 
 RUN git clone https://github.com/verilator/verilator.git --branch ${VERILATOR_BRANCH} . \
-    &&  cp /usr/include/FlexLexer.h src/ \
+    && cp /home/linuxbrew/.linuxbrew/include/FlexLexer.h src/ \
     && autoconf \
     && ./configure --prefix ${HOME} \
     && make -s ${MAKE_JOBS} \
