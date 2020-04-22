@@ -9,3 +9,7 @@ endif
 ifdef VERILATOR_TRACE
     $(warning VERILATOR_TRACE is deprecated, see the "Simulator Support" section in the documentation.)
 endif
+
+ifeq ($(SIM),aldec)
+    $(warning Using SIM=aldec is deprecated, please use SIM=riviera instead.)
+endif
