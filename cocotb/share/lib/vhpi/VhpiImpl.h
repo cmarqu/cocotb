@@ -158,6 +158,7 @@ public:
     ~VhpiArrayObjHdl() override;
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 };
 
 class VhpiObjHdl : public GpiObjHdl {
@@ -168,6 +169,7 @@ public:
     ~VhpiObjHdl() override;
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 };
 
 class VhpiSignalObjHdl : public GpiSignalObjHdl {
@@ -195,6 +197,7 @@ public:
     /* Value change callback accessor */
     GpiCbHdl *value_change_cb(int edge) override;
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 
 protected:
     vhpiEnumT chr2vhpi(char value);
@@ -218,6 +221,7 @@ public:
     int set_signal_value_binstr(std::string &value, gpi_set_action_t action) override;
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 };
 
 class VhpiIterator : public GpiIterator {

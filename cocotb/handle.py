@@ -77,10 +77,10 @@ class SimHandleBase:
         self._sub_handles = {}  # Dictionary of children
         self._invalid_sub_handles = set()  # Set of invalid queries
 
-        self._name = simulator.get_name_string(self._handle)
-        self._type = simulator.get_type_string(self._handle)
-        self._is_port = self._handle.get_is_port(self._handle)
-        self._port_direction_string = self._handle.get_port_direction_string(self._handle)
+        self._name = self._handle.get_name_string()
+        self._type = self._handle.get_type_string()
+        self._is_port = self._handle.get_is_port()
+        self._port_direction_string = self._handle.get_port_direction_string()
         self._fullname = self._name + "(%s)" % self._type
         self._path = self._name if path is None else path
         self._log = SimLog("cocotb.%s" % self._name)

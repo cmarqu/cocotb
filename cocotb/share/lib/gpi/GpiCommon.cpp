@@ -509,7 +509,7 @@ int gpi_is_indexable(gpi_sim_hdl obj_hdl)
 
 int gpi_is_port(gpi_sim_hdl sig_hdl)
 {
-    GpiObjHdl *obj_hdl = sim_to_hdl<GpiObjHdl*>(sig_hdl);
+    GpiSignalObjHdl *obj_hdl = static_cast<GpiSignalObjHdl*>(sig_hdl);
     if (obj_hdl->get_is_port())
         return 1;
     return 0;
@@ -538,10 +538,18 @@ const char *gpi_get_port_direction_str(gpi_port_direction_t port_direction)
 
 gpi_port_direction_t gpi_port_direction(gpi_sim_hdl sig_hdl)
 {
-    GpiObjHdl *obj_hdl = sim_to_hdl<GpiObjHdl*>(sig_hdl);
+    GpiSignalObjHdl *obj_hdl = static_cast<GpiSignalObjHdl*>(sig_hdl);
     return obj_hdl->get_port_direction();
 }
 
+void gpi_set_signal_value_long(gpi_sim_hdl sig_hdl, long value, gpi_set_action_t action)
+{
+    GpiSignalObjHdl *obj_hdl = static_cast<GpiSignalObjHdl*>(sig_hdl);
+
+    obj_hdl->set_signal_value(value, action);
+}
+
+void gpi_set_signal_value_binstr(gpi_sim_hdl sig_hdl, const char *binstr, gpi_set_action_t action)
 {
     std::string value = binstr;
     GpiSignalObjHdl *obj_hdl = static_cast<GpiSignalObjHdl*>(sig_hdl);

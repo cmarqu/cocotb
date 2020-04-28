@@ -89,13 +89,13 @@ def discover_ports(dut):
             else:
                 raise TestFailure("Unhandled port direction")
     if count != count_exp:
-        raise TestFailure("Did not discover the expected number of total ports in the DUT")
+        raise TestFailure("Expected {} total ports in the DUT but only found {}".format(count_exp, count))
     if inputs != inputs_exp:
-        raise TestFailure("Did not discover the expected number of input ports in the DUT")
+        raise TestFailure("Expected {} input ports in the DUT but only found {}".format(inputs_exp, inputs))
     if outputs != outputs_exp:
-        raise TestFailure("Did not discover the expected number of output ports in the DUT")
+        raise TestFailure("Expected {} output ports in the DUT but only found {}".format(outputs_exp, outputs))
     if inouts != inouts_exp:
-        raise TestFailure("Did not discover the expected number of inout ports in the DUT")
+        raise TestFailure("Expected {} inout ports in the DUT but only found {}".format(inouts_exp, inouts))
 
 
 @cocotb.test(skip=True)

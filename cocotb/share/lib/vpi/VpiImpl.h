@@ -150,6 +150,7 @@ public:
                                                              GpiObjHdl(impl, hdl, objtype) { }
 
     int initialise(std::string &name, std::string &fq_name) override;
+  //    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 };
 
 class VpiObjHdl : public GpiObjHdl {
@@ -158,6 +159,7 @@ public:
                                                              GpiObjHdl(impl, hdl, objtype) { }
 
     int initialise(std::string &name, std::string &fq_name) override;
+  //    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 };
 
 class VpiSignalObjHdl : public GpiSignalObjHdl {
@@ -181,6 +183,7 @@ public:
     /* Value change callback accessor */
     GpiCbHdl *value_change_cb(int edge) override;
     int initialise(std::string &name, std::string &fq_name) override;
+  //    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 
 private:
     int set_signal_value(s_vpi_value value, gpi_set_action_t action);

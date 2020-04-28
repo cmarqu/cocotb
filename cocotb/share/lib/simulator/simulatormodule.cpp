@@ -720,6 +720,20 @@ static PyObject *get_const(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject *args)
     return PyBool_FromLong(result);
 }
 
+static PyObject *get_is_port(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject *args)
+{
+    COCOTB_UNUSED(args);
+    int result = gpi_is_port(self->hdl);
+    return PyBool_FromLong(result);
+}
+
+static PyObject *get_port_direction_string(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject *args)
+{
+    COCOTB_UNUSED(args);
+    const char *result = gpi_get_port_direction_str(gpi_port_direction(self->hdl));
+    return PyUnicode_FromString(result);
+}
+
 static PyObject *get_type_string(gpi_hdl_Object<gpi_sim_hdl> *self, PyObject *args)
 {
     COCOTB_UNUSED(args);
@@ -927,12 +941,18 @@ static PyMethodDef gpi_sim_hdl_methods[] = {
     {"get_type_string",
         (PyCFunction)get_type_string, METH_NOARGS,
         "Get the type of an object as a string"},
+    {"get_port_direction_string",
+        (PyCFunction)get_port_direction_string, METH_NOARGS,
+        "Get the direction of a port as a string"},
     {"get_type",
         (PyCFunction)get_type, METH_NOARGS,
         "Get the type of an object, mapped to a GPI enumeration"},
     {"get_const",
         (PyCFunction)get_const, METH_NOARGS,
         "Get a flag indicating whether the object is a constant"},
+    {"get_is_port",
+        (PyCFunction)get_is_port, METH_NOARGS,
+        "Get a flag indicating whether the object is a port"},
     {"get_num_elems",
         (PyCFunction)get_num_elems, METH_NOARGS,
         "Get the number of elements contained in the handle"},

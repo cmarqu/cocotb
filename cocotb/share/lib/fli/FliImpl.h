@@ -181,6 +181,7 @@ public:
 
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 };
 
 class FliSignalObjHdl : public GpiSignalObjHdl, public FliObj {
@@ -202,6 +203,7 @@ public:
 
     GpiCbHdl *value_change_cb(int edge) override;
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 
     bool is_var() { return m_is_var; }
 
@@ -249,6 +251,7 @@ public:
     void *get_sub_hdl(int index);
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 
     mtiTypeKindT get_fli_typekind() { return m_fli_type; }
     mtiTypeIdT   get_fli_typeid() { return m_val_type; }
@@ -283,6 +286,7 @@ public:
     int set_signal_value(long value, gpi_set_action_t action) override;
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 
 private:
     char             **m_value_enum;    // Do Not Free
@@ -326,6 +330,7 @@ public:
     int set_signal_value_binstr(std::string &value, gpi_set_action_t action) override;
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 
 
 private:
@@ -356,6 +361,7 @@ public:
     int set_signal_value(long value, gpi_set_action_t action) override;
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 };
 
 class FliRealObjHdl : public FliValueObjHdl {
@@ -383,6 +389,7 @@ public:
     int set_signal_value(double value, gpi_set_action_t action) override;
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 
 private:
     double *m_mti_buff;
@@ -413,6 +420,7 @@ public:
     int set_signal_value_str(std::string &value, gpi_set_action_t action) override;
 
     int initialise(std::string &name, std::string &fq_name) override;
+    int initialise(std::string &name, std::string &fq_name, bool is_port, gpi_port_direction_t port_direction) override;
 
 private:
     char *m_mti_buff;
