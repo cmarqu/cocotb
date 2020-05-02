@@ -28,7 +28,7 @@ This allows for a rapid re-running of a simulator if none of the RTL source file
 
 
 ..
-  If you edit the following sections, please also update the "helpmsg" text in cocotb/share/makefiles/Makefile.sim
+  If you edit the following sections, please also update the "helpmsg" text in cocotb/config.py
 
 Make Variables
 --------------
