@@ -17,29 +17,15 @@ RUN pip3 install -U flake8 pylint
 RUN sudo apt-get update
 
 # Install needed packages
-RUN sudo apt-get install -y flex gnat gtkwave swig
+RUN sudo apt-get install -y flex gnat gtkwave swig gperf
 RUN sudo rm -rf /var/lib/apt/lists/*
 
-## Install Icarus Verilog
-RUN brew install icarus-verilog
-
-## Install Verilator
-RUN brew install verilator
-
-## Install GHDL
-ENV GHDL_BRANCH=v0.37
-RUN git clone https://github.com/ghdl/ghdl.git --depth=1 --branch ${GHDL_BRANCH} ghdl \
-    && cd ghdl \
+## Install Icarus latest
+RUN git clone https://github.com/steveicarus/iverilog.git icarus \
+    && cd icarus \
+    && autoconf \
     && ./configure \
-    && make -s \
+    && make -j4 -s \
     && sudo make -s install \
     && cd .. \
-    && rm -rf ghdl
-
-# Install cvc
-RUN git clone https://github.com/cambridgehackers/open-src-cvc.git --depth=1 cvc \
-    && cd cvc/src \
-    && make -f makefile.cvc64 -s \
-    && sudo cp cvc64 /usr/local/bin \
-    && cd ../.. \
-    && rm -rf cvc
+    && rm -rf icarus
