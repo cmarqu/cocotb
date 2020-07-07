@@ -524,7 +524,11 @@ def want_color_output():
 
     Colored output can be explicitly requested by setting :envvar:`COCOTB_ANSI_OUTPUT` to  ``1``.
     """
-    want_color = sys.stdout.isatty()  # default to color for TTYs
+    # Default to color for TTYs.
+    # Note that sys.stdout.isatty() does not always produce the expected result because
+    # there are simulator makefiles that push the simulator output through a pipe,
+    # so we use sys.stdin.isatty() for those cases.
+    want_color = sys.stdout.isatty() or sys.stdin.isatty()
     if os.getenv("NO_COLOR") is not None:
         want_color = False
     if os.getenv("COCOTB_ANSI_OUTPUT", default='0') == '1':
