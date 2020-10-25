@@ -37,7 +37,7 @@ import threading
 import random
 import time
 import warnings
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 from collections.abc import Coroutine
 
 import cocotb.handle
@@ -96,31 +96,31 @@ def _setup_logging():
 # so that cocotb.scheduler gives you the singleton instance and not the
 # scheduler package
 
-scheduler = None  # type: cocotb.scheduler.Scheduler
+scheduler = None  # type: Optional[Scheduler]
 """The global scheduler instance."""
 
-regression_manager = None  # type: cocotb.regression.RegressionManager
+regression_manager = None  # type: Optional[RegressionManager]
 """The global regression manager instance."""
 
-argv = None  # type: List[str]
+argv = None  # type: Optional[List[str]]
 """The argument list as seen by the simulator"""
 
-argc = None  # type: int
+argc = None  # type: Optional[int]
 """The length of :data:`cocotb.argv`"""
 
-plusargs = None  # type: Dict[str, Union[bool, str]]
+plusargs = None  # type: Optional[Dict[str, Union[bool, str]]]
 """A dictionary of "plusargs" handed to the simulation. See :make:var:`PLUSARGS` for details."""
 
-LANGUAGE = os.getenv("TOPLEVEL_LANG")  # type: str
+LANGUAGE = os.getenv("TOPLEVEL_LANG")  # type: Optional[str]
 """The value of :make:var:`TOPLEVEL_LANG`"""
 
-SIM_NAME = None  # type: str
+SIM_NAME = None  # type: Optional[str]
 """The running simulator product information. ``None`` if :mod:`cocotb` was not loaded from a simulator"""
 
-SIM_VERSION = None  # type: str
+SIM_VERSION = None  # type: Optional[str]
 """The version of the running simulator. ``None`` if :mod:`cocotb` was not loaded from a simulator"""
 
-RANDOM_SEED = None  # type: int
+RANDOM_SEED = None  # type: Optional[int]
 """
 The value passed to the Python default random number generator.
 See :envvar:`RANDOM_SEED` for details on how the value is computed.
@@ -129,7 +129,7 @@ See :envvar:`RANDOM_SEED` for details on how the value is computed.
 _library_coverage = None
 """ used for cocotb library coverage """
 
-top = None  # type: cocotb.handle.SimHandleBase
+top = None  # type: Optional[cocotb.handle.SimHandleBase]
 r"""
 A handle to the :envvar:`TOPLEVEL` entity/module.
 

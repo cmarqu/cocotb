@@ -34,7 +34,9 @@ import sys
 import os
 import traceback
 import pdb
-from typing import Any, Optional, Tuple, Iterable
+from typing import Any, Callable, Iterable, Optional, Tuple
+
+SimHandle = Callable[[int, str], cocotb.handle.SimHandleBase]
 
 import cocotb
 import cocotb.ANSI as ANSI
@@ -232,6 +234,7 @@ class RegressionManager:
             test = hook(self._dut)
         except Exception:
             self.log.warning("Failed to initialize hook %s" % hook.name, exc_info=True)
+            return None
         else:
             return cocotb.scheduler.add(test)
 
@@ -324,7 +327,7 @@ class RegressionManager:
                 hilight_end,
                 test.__qualname__))
             self._record_result(test, None, 0, 0)
-            return
+            return None
 
         test_init_outcome = cocotb.outcomes.capture(test, self._dut)
 
@@ -332,7 +335,7 @@ class RegressionManager:
             self.log.error("Failed to initialize test %s" % test.__qualname__,
                            exc_info=test_init_outcome.error)
             self._record_result(test, test_init_outcome, 0, 0)
-            return
+            return None
 
         test = test_init_outcome.get()
         return test

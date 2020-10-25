@@ -39,6 +39,7 @@ import warnings
 
 from cocotb import simulator
 
+from typing import Union
 
 def _get_simulator_precision():
     # cache and replace this function
@@ -268,7 +269,7 @@ def hexdump(x: bytes) -> str:
     return rs
 
 
-def hexdiffs(x: bytes, y: bytes) -> str:
+def hexdiffs(x: Union[bytes, str], y: Union[bytes, str]) -> str:
     r"""Return a diff string showing differences between two binary strings.
 
     Args:

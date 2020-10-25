@@ -38,6 +38,8 @@ from cocotb.binary import BinaryValue
 from cocotb.log import SimLog
 from cocotb.result import TestError
 
+from typing import Dict
+
 # Only issue a warning for each deprecated attribute access
 _deprecation_warned = set()
 
@@ -909,7 +911,7 @@ class StringObject(ModifiableObject):
         return self.value.decode('ascii')
 
 
-_handle2obj = {}
+_handle2obj = {}  # type: Dict[int, SimHandleBase]
 
 
 def SimHandle(handle, path=None):
