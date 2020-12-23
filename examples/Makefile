@@ -34,6 +34,7 @@ EXAMPLES := adder/tests \
             endian_swapper/tests \
             matrix_multiplier/tests \
             mean/tests \
+            custom_logger \
             mixed_language/tests
 # requires root permissions: ping_tun_tap/tests
 
