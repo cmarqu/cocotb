@@ -178,6 +178,7 @@ A test can spawn multiple coroutines, allowing for independent flows of executio
    GPI Library Reference <library_reference_c>
    simulator_support
    extensions
+   refcard
 
 .. toctree::
    :maxdepth: 1
