@@ -60,6 +60,19 @@ to the top component as shown in the example below:
     `endif
     endmodule
 
+.. _sim-icarus-existing-setups:
+
+Extending existing Simulation Setups
+------------------------------------
+
+In order to extend an existing simulation setup for use with cocotb,
+this section shows the minimum settings to be done.
+
+* Define the :envvar:`LIBPYTHON_LOC` variable using ``$(cocotb-config --libpython)``.
+* Define the :envvar:`MODULE` variable with the name of the Python module containing your testcases.
+* Call the ``vvp`` executable with the options
+  ``-M $(cocotb-config --prefix)/cocotb/libs -m libcocotbvpi_icarus``.
+
 .. _sim-icarus-issues:
 
 Issues for this simulator
@@ -131,6 +144,22 @@ For Verilator 4.102 and above, the `-CFLAGS -DVM_TRACE_FST=1` argument is no lon
 
 The resulting file will be ``dump.fst`` and can be opened by ``gtkwave dump.fst``.
 
+.. _sim-verilator-existing-setups:
+
+Extending existing Simulation Setups
+------------------------------------
+
+In order to extend an existing simulation setup for use with cocotb,
+this section shows the minimum settings to be done.
+
+* Define the :envvar:`LIBPYTHON_LOC` variable using ``$(cocotb-config --libpython)``.
+* Define the :envvar:`MODULE` variable with the name of the Python module containing your testcases.
+* Extend the ``vcs`` call with the options
+  ``+vpi -P pli.tab -load $(cocotb-config --prefix)/cocotb/libs/libcocotbvpi_vcs.so``.
+* Extend the call to ``verilator`` with these options:
+  ``-cc --exe --vpi --public-flat-rw --prefix Vtop -LDFLAGS "-Wl,-rpath,$(cocotb-config --prefix)/cocotb/libs -L$(cocotb-config --prefix)/cocotb/libs -lcocotbvpi_verilator -lgpi -lcocotb -lgpilog -lcocotbutils" $(cocotb-config --share)/lib/verilator/verilator.cpp``
+* Run Verilator's makefile as follows: ``CPPFLAGS="-std=c++11" make -f Vtop.mk``
+
 .. _sim-verilator-issues:
 
 Issues for this simulator
@@ -151,6 +180,21 @@ In order to use this simulator, set :make:var:`SIM` to ``vcs``:
     make SIM=vcs
 
 cocotb currently only supports :term:`VPI` for Synopsys VCS, not :term:`VHPI`.
+
+.. _sim-vcs-existing-setups:
+
+Extending existing Simulation Setups
+------------------------------------
+
+In order to extend an existing simulation setup for use with cocotb,
+this section shows the minimum settings to be done.
+
+* Define the :envvar:`LIBPYTHON_LOC` variable using ``$(cocotb-config --libpython)``.
+* Define the :envvar:`MODULE` variable with the name of the Python module containing your testcases.
+* Create a file ``pli.tab`` with the content ``acc+=rw,wn:*`` (or equivalent)
+  to allow cocotb to access values in the design.
+* Extend the ``vcs`` call with the options
+  ``+vpi -P pli.tab -load $(cocotb-config --prefix)/cocotb/libs/libcocotbvpi_vcs.so``.
 
 .. _sim-vcs-issues:
 
@@ -269,6 +313,37 @@ ModelSim DE and SE (and Questa, of course) support the :term:`FLI`.
 In order to start ModelSim or Questa with the graphical interface and for the simulator to remain active after the tests have completed, set :make:var:`GUI=1`.
 If you have previously launched a test without this setting, you might have to delete the :make:var:`SIM_BUILD` directory (``sim_build`` by default) to get the correct behavior.
 
+.. _sim-modelsim-existing-setups:
+
+Extending existing Simulation Setups
+------------------------------------
+
+In order to extend an existing simulation setup for use with cocotb,
+this section shows the minimum settings to be done.
+
+* Define the :envvar:`LIBPYTHON_LOC` variable using ``$(cocotb-config --libpython)``.
+* Define the :envvar:`MODULE` variable with the name of the Python module containing your testcases.
+* The ``vlog`` and ``vcom`` compiler calls need the ``-acc`` (or equivalent) option set
+  to allow cocotb to access values in the design.
+
+.. tabs::
+
+   .. group-tab:: Design with a VHDL Toplevel
+
+      For a design with a VHDL toplevel, call the ``vsim`` executable with the option
+      ``-foreign "cocotb_init $(cocotb-config --prefix)/cocotb/libs/libcocotbfli_modelsim.so"``.
+
+      Set the :envvar:`GPI_EXTRA` variable to ``cocotbvpi_modelsim:cocotbvpi_entry_point``
+      if there are also (System)Verilog modules in the design.
+
+   .. group-tab:: Design with a (System)Verilog Toplevel
+
+      For a design with a (System)Verilog toplevel, call the ``vsim`` executable with the option
+      ``-pli "cocotb_init $(cocotb-config --prefix)/cocotb/libs/libcocotbvpi_modelsim.so"``.
+
+      Set the :envvar:`GPI_EXTRA` variable to ``cocotbvpi_modelsim:cocotbfli_entry_point``
+      if there are also VHDL modules in the design.
+
 .. _sim-modelsim-issues:
 
 Issues for this simulator
@@ -311,6 +386,40 @@ In order to use this simulator, set :make:var:`SIM` to ``xcelium``:
 
 The simulator automatically loads :term:`VPI` even when only :term:`VHPI` is requested.
 
+.. _sim-xcelium-existing-setups:
+
+Extending existing Simulation Setups
+------------------------------------
+
+In order to extend an existing simulation setup for use with cocotb,
+this section shows the minimum settings to be done.
+
+* Define the :envvar:`LIBPYTHON_LOC` variable using ``$(cocotb-config --libpython)``.
+* Define the :envvar:`MODULE` variable with the name of the Python module containing your testcases.
+* The ``xrun`` call needs the ``-access +rwc`` (or equivalent) option set
+  to allow cocotb to access values in the design.
+
+.. tabs::
+
+   .. group-tab:: Design with a VHDL Toplevel
+
+      For a design with a VHDL toplevel, call the ``xrun`` executable with the option
+      ``-loadvpi $(cocotb-config --prefix)/cocotb/libs/libcocotbvpi_ius:vlog_startup_routines_bootstrap``.
+
+      Set the :envvar:`GPI_EXTRA` variable to ``cocotbvhpi_ius:cocotbvhpi_entry_point``.
+      This is because loading the VHPI library causes an error in Xcelium,
+      so always load the VPI library and supply VHPI via ``GPI_EXTRA``.
+
+   .. group-tab:: Design with a (System)Verilog Toplevel
+
+      For a design with a (System)Verilog toplevel, call the ``xrun`` executable with the option
+      ``-loadvpi $(cocotb-config --prefix)/cocotb/libs/libcocotbvpi_ius:vlog_startup_routines_bootstrap``.
+
+      Set the :envvar:`GPI_EXTRA` variable to ``cocotbvhpi_ius:cocotbvhpi_entry_point``
+      if there are also VHDL modules in the design.
+      This is because loading the VHPI library causes an error in Xcelium,
+      so always load the VPI library and supply VHPI via ``GPI_EXTRA`` if needed.
+
 .. _sim-xcelium-issues:
 
 Issues for this simulator
@@ -332,6 +441,19 @@ In order to use this simulator, set :make:var:`SIM` to ``ghdl``:
 
 Support is preliminary.
 Noteworthy is that despite GHDL being a VHDL simulator, it implements the :term:`VPI` interface.
+
+.. _sim-ghdl-existing-setups:
+
+Extending existing Simulation Setups
+------------------------------------
+
+In order to extend an existing simulation setup for use with cocotb,
+this section shows the minimum settings to be done.
+
+* Define the :envvar:`LIBPYTHON_LOC` variable using ``$(cocotb-config --libpython)``.
+* Define the :envvar:`MODULE` variable with the name of the Python module containing your testcases.
+* Extend the ``ghdl -r`` call with the option
+  ``--vpi=$(cocotb-config --prefix)/cocotb/libs/libcocotbvpi_ghdl.so``.
 
 .. _sim-ghdl-issues:
 
@@ -377,6 +499,19 @@ set :make:var:`SIM` to ``cvc``:
     make SIM=cvc
 
 Note that cocotb's makefile is using CVC's interpreted mode.
+
+.. _sim-cvc-existing-setups:
+
+Extending existing Simulation Setups
+------------------------------------
+
+In order to extend an existing simulation setup for use with cocotb,
+this section shows the minimum settings to be done.
+
+* Define the :envvar:`LIBPYTHON_LOC` variable using ``$(cocotb-config --libpython)``.
+* Define the :envvar:`MODULE` variable with the name of the Python module containing your testcases.
+* Extend the ``cvc64`` call with the option
+  ``+interp +acc+2 +loadvpi=$(cocotb-config --prefix)/cocotb/libs/libcocotbvpi_modelsim:vlog_startup_routines_bootstrap``.
 
 .. _sim-cvc-issues:
 
