@@ -281,6 +281,38 @@ ModelSim DE and SE (and Questa, of course) support the :term:`FLI`.
 In order to start ModelSim or Questa with the graphical interface and for the simulator to remain active after the tests have completed, set :make:var:`GUI=1`.
 If you have previously launched a test without this setting, you might have to delete the :make:var:`SIM_BUILD` directory (``sim_build`` by default) to get the correct behavior.
 
+.. _sim-modelsim-existing-setups:
+
+Extending existing Simulation Setups
+------------------------------------
+
+In order to extend an existing simulation setup for use with cocotb,
+this section shows the minimum settings to be done.
+
+* Define the :envvar:`LIBPYTHON_LOC` variable using ``$(cocotb-config --libpython)``.
+* Define the :envvar:`MODULE` variable with the name of the Python module containing your testcases.
+
+.. tabs::
+
+   .. group-tab:: Design with a VHDL Toplevel
+
+      For a design with a VHDL toplevel,
+      call the ``vsim`` executable with the option
+      ``-foreign "cocotb_init $(cocotb-config --prefix)/cocotb/libs/libcocotbfli_modelsim.so"``,
+      and set :envvar:`GPI_EXTRA` to
+      ``cocotbvpi_modelsim:cocotbvpi_entry_point``
+      if there are also (System)Verilog modules in the design.
+
+   .. group-tab:: Design with a (System)Verilog Toplevel
+
+      For a design with a (System)Verilog toplevel,
+      call the ``vsim`` executable with the option
+      ``-pli "cocotb_init $(cocotb-config --prefix)/cocotb/libs/libcocotbvpi_modelsim.so"``,
+      and set :envvar:`GPI_EXTRA` to
+      ``cocotbvpi_modelsim:cocotbfli_entry_point``
+      if there are also VHDL modules in the design.
+
+
 .. _sim-modelsim-issues:
 
 Issues for this simulator
