@@ -229,6 +229,11 @@ jobs:
         make -j $(nproc)
         sudo make install
 
+    - name: Register GCC problem matcher
+      if: (!matrix.cxx || matrix.cxx == 'g++')
+      run: |
+        echo "::add-matcher::.github/problem-matchers/gcc.json"
+
       # Windows Testing
     - name: Install cocotb build dependencies (Windows)
       if: startsWith(matrix.os, 'windows')
