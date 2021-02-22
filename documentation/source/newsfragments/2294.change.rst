@@ -1,0 +1,1 @@
+VHDL allows signals to have a length of zero bit. BinaryValue failed when trying to convert a empty string into an integer. Now a vector of length zero reads as 0.

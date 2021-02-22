@@ -220,15 +220,21 @@ class BinaryValue:
         return binstr
 
     def _convert_from_unsigned(self, x):
+        if not len(x):
+            return 0
         return int(x.translate(_resolve_table), 2)
 
     def _convert_from_signed_mag(self, x):
+        if not len(x):
+            return 0
         rv = int(self._str[1:].translate(_resolve_table), 2)
         if self._str[0] == '1':
             rv = rv * -1
         return rv
 
     def _convert_from_twos_comp(self, x):
+        if not len(x):
+            return 0
         if x[0] == '1':
             binstr = x[1:]
             binstr = self._invert(binstr)
