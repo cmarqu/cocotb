@@ -1,12 +1,11 @@
 import cocotb
 from cocotb.result import TestFailure
 from cocotb.triggers import Timer
-from cocotb.binary import BinaryValue
-
 
 
 @cocotb.test()
 async def test_long_signal(dut):
+    """ Write and read a normal signal (longer than 0)."""
     await Timer(1, "ns")
     dut.data_in <= 0x5
     await Timer(1, "ns")
