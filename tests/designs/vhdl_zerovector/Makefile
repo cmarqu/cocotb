@@ -1,6 +1,10 @@
+# Copyright cocotb contributors
+# Licensed under the Revised BSD License, see LICENSE for details.
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # Simulator configuration
-# -----------------------
-# simulator (modelsim is still 32-bit only)
+# ----------------------- 
+# Simulator (modelsim is still 32-bit only)
 SIM ?= modelsim
 ARCH ?= i686
 # language of toplevel module
