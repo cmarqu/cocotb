@@ -29,6 +29,14 @@ def test_init_zero_length():
     assert bin3.binstr == ""
     assert bin3.integer == 0
 
+    # Whatever value is set to a zero bit long BinaryValue, it should read 0
+    with pytest.warns(RuntimeWarning, match=TRUNCATION_MATCH):
+        bin4 = BinaryValue(value=10, n_bits=0,
+                           binaryRepresentation=BinaryRepresentation.SIGNED_MAGNITUDE)
+    assert bin4._str == ""
+    assert bin4.binstr == ""
+    assert bin4.integer == 0
+
 
 def test_init_big_endian_twos_comp():
     bin1 = BinaryValue(value=-1, n_bits=2, bigEndian=True, binaryRepresentation=BinaryRepresentation.TWOS_COMPLEMENT)
