@@ -8,6 +8,28 @@ from cocotb.binary import BinaryValue, BinaryRepresentation
 TRUNCATION_MATCH = r"\d+-bit value requested, truncating value"
 
 
+def test_init_zero_length():
+    with pytest.warns(RuntimeWarning, match=TRUNCATION_MATCH):
+        bin1 = BinaryValue(value=0, n_bits=0, binaryRepresentation=BinaryRepresentation.UNSIGNED)
+    assert bin1._str == ""
+    assert bin1.binstr == ""
+    assert bin1.integer == 0
+
+    with pytest.warns(RuntimeWarning, match=TRUNCATION_MATCH):
+        bin2 = BinaryValue(value=0, n_bits=0,
+                           binaryRepresentation=BinaryRepresentation.TWOS_COMPLEMENT)
+    assert bin2._str == ""
+    assert bin2.binstr == ""
+    assert bin2.integer == 0
+
+    with pytest.warns(RuntimeWarning, match=TRUNCATION_MATCH):
+        bin3 = BinaryValue(value=0, n_bits=0,
+                           binaryRepresentation=BinaryRepresentation.SIGNED_MAGNITUDE)
+    assert bin3._str == ""
+    assert bin3.binstr == ""
+    assert bin3.integer == 0
+
+
 def test_init_big_endian_twos_comp():
     bin1 = BinaryValue(value=-1, n_bits=2, bigEndian=True, binaryRepresentation=BinaryRepresentation.TWOS_COMPLEMENT)
     assert bin1._str == "11"
