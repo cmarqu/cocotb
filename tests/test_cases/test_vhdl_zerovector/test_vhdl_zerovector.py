@@ -18,7 +18,7 @@ async def test_long_signal(dut):
         raise TestFailure("Failed to readback dut.data_out")
 
 
-@cocotb.test()
+@cocotb.test(expect_error=AttributeError if cocotb.SIM_NAME.lower().startswith('ghdl') else ())
 async def test_read_zero_signal(dut):
     """ Read a zero vector. It should always read 0."""
     await Timer(1, "ns")
@@ -26,7 +26,7 @@ async def test_read_zero_signal(dut):
         raise TestFailure("Failed to readback dut.Cntrl_out")
 
 
-@cocotb.test()
+@cocotb.test(expect_error=AttributeError if cocotb.SIM_NAME.lower().startswith('ghdl') else ())
 async def test_write_zero_signal_with_0(dut):
     """ Write a zero vector with 0."""
     await Timer(1, "ns")
@@ -36,7 +36,7 @@ async def test_write_zero_signal_with_0(dut):
         raise TestFailure("Failed to readback dut.Cntrl_out")
 
 
-@cocotb.test()
+@cocotb.test(expect_error=AttributeError if cocotb.SIM_NAME.lower().startswith('ghdl') else ())
 async def test_write_zero_signal_with_1(dut):
     """ Write a zero vector with 1. Should catch a "out of range" exception."""
     await Timer(1, "ns")
