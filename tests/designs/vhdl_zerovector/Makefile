@@ -18,6 +18,10 @@ ifneq ($(filter $(SIM), questa modelsim),)
     SIM_ARGS += -t ns
 endif
 
+ifneq ($(filter $(SIM),ius xcelium),)
+    SIM_ARGS += -v93
+endif
+
 PWD=$(shell pwd)
 COCOTB?=$(PWD)/../../..
 
