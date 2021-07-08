@@ -5,11 +5,15 @@ VHDL_SOURCES := a.vhdl
 TOPLEVEL := a
 MODULE := test_ab
 
+ifneq ($(filter $(SIM),xcelium),)
+    COMPILE_ARGS += -v93
+endif
+
 ifneq ($(shell echo $(TOPLEVEL_LANG) | tr A-Z a-z),vhdl)
 all:
 	@echo "Skipping test since only VHDL is supported"
 clean::
-else ifeq ($(filter ghdl questa modelsim,$(shell echo $(SIM) | tr A-Z a-z)),)
+else ifeq ($(filter ghdl questa modelsim xcelium,$(shell echo $(SIM) | tr A-Z a-z)),)
 all:
 	@echo "Skipping test since only GHDL and Questa/Modelsim is supported"
 clean::
