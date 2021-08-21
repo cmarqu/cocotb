@@ -14,8 +14,8 @@ async def test_force_release(dut):
     """Test force and release."""
     log = logging.getLogger("cocotb.test")
     await Timer(10, "ns")
-    dut.stream_in_data <= 4
-    dut.stream_out_data_comb <= Force(5)
+    dut.stream_in_data.value = 4
+    dut.stream_out_data_comb.value = Force(5)
     await Timer(10, "ns")
     got_in = dut.stream_in_data.value
     got_out = dut.stream_out_data_comb.value
@@ -25,8 +25,8 @@ async def test_force_release(dut):
         got_in != got_out
     ), "stream_in_data and stream_out_data_comb should not match when force is active!"
 
-    dut.stream_out_data_comb <= Release()
-    dut.stream_in_data <= 3
+    dut.stream_out_data_comb.value = Release()
+    dut.stream_in_data.value = 3
     await Timer(10, "ns")
     got_in = dut.stream_in_data.value
     got_out = dut.stream_out_data_comb.value
