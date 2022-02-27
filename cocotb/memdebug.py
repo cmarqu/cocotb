@@ -30,6 +30,8 @@ import dowser
 
 
 def start(port):
+    """Start the debugger."""
+
     cherrypy.tree.mount(dowser.Root())
     cherrypy.config.update({
         'environment': 'embedded',

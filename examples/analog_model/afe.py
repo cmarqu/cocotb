@@ -33,7 +33,7 @@ class PGA:
         self.in_queue = in_queue
         self.out_queue = out_queue
 
-        cocotb.start_soon(self.run())
+        cocotb.start_soon(self._run())
 
     @property
     def gain(self) -> float:
@@ -43,7 +43,7 @@ class PGA:
     def gain(self, val: float) -> None:
         self._gain = val
 
-    async def run(self) -> None:
+    async def _run(self) -> None:
         while True:
             in_val_V = await self.in_queue.get()
             await Timer(1.0, "ns")  # delay
@@ -70,9 +70,9 @@ class ADC:
         self.in_queue = in_queue
         self.out_queue = out_queue
 
-        cocotb.start_soon(self.run())
+        cocotb.start_soon(self._run())
 
-    async def run(self) -> None:
+    async def _run(self) -> None:
         while True:
             in_val_V = await self.in_queue.get()  # sample immediately
             await Timer(1, "us")  # wait for conversion time

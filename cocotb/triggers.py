@@ -82,7 +82,7 @@ class Trigger(Awaitable):
 
     @abc.abstractmethod
     def prime(self, callback):
-        """Set a callback to be invoked when the trigger fires.
+        """Set *callback* to be invoked when the trigger fires.
 
         The callback will be invoked with a single argument, `self`.
 

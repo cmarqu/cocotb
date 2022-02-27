@@ -71,7 +71,7 @@ class MatrixMultiplierTester:
     """
     Reusable checker of a matrix_multiplier instance
 
-    Args
+    Args:
         matrix_multiplier_entity: handle to an instance of matrix_multiplier
     """
 
@@ -184,14 +184,17 @@ async def test_multiply(dut):
 
 
 def create_matrix(func, rows, cols):
+    """Create a matrix."""
     return [func(DATA_WIDTH) for row in range(rows) for col in range(cols)]
 
 
 def create_a(func):
+    """Create matrix A."""
     return create_matrix(func, A_ROWS, A_COLUMNS_B_ROWS)
 
 
 def create_b(func):
+    """Create matrix B."""
     return create_matrix(func, A_COLUMNS_B_ROWS, B_COLUMNS)
 
 
